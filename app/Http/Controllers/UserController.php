@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Model\User;
 use Illuminate\Support\Facades\DB;
+use Mail;
 
 class UserController extends Controller
 {
@@ -58,6 +59,11 @@ class UserController extends Controller
                             'status'=> 0,
                             'msg'=> '该用户名已被注册！'
                         ));
+                    } else if(count($variable::where($mode, $request->$mode)->get())){
+                        return json_encode(array(
+                            'status'=> 0,
+                            'msg'=> $request->$mode.'已被占用！'
+                        ));
                     } else {
                         $variable->uId = md5(uniqid());
                         foreach($req as $key => $value) {
@@ -71,8 +77,15 @@ class UserController extends Controller
                         return json_encode(array(
                             'status'=> 1,
                             'msg'=> '注册成功！',
-                            'data'=> $variable
+                            'data'=> $variable,
+                            'mail'=> $flag
                         ));
+                        //注册成功，发送验证邮件
+                        $name="前端码农俱乐部";
+                        $flag = Mail::send('registermail', ['name'=>$name],function ($message) {
+                            $to = '1719904000@qq.com';
+                            $message->to($to)->subject('测试邮件');
+                        });
                     }
                 }
             } else {
