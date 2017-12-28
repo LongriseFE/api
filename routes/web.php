@@ -17,3 +17,5 @@ Route::get('/', function () {
 
 Route::get('/register/{mode}', 'UserController@register')->name('register');
 Route::get('/login', 'UserController@login')->name('login');
+Route::get('/online', 'UserController@online')->name('online');
+Route::get('/remember/{mode}/{uId}', 'UserController@remember')->name('remember');

@@ -190,12 +190,12 @@ class UserController extends Controller
                 }
             }
             if ($variable) {
-                $request->session()->put('username', $variable->username);
+                $request->session()->push('site.username', $variable->username);
                 return json_encode(array(
                     'status'=> 1,
                     'msg'=> '登录成功！',
                     'data'=> $variable,
-                    'online'=> $request->session()->all()
+                    'online'=> $request->session()->get('site')
                 ));
             }
         } else {
@@ -205,5 +205,36 @@ class UserController extends Controller
                 'content'=>'username、email、phone三者任选其一，password为必须！'
             ));
         }
+    }
+    // 在线人数统计
+    public function online (Request $request) {
+        if ($request->session()->has('site')) {
+            $site = $request->session()->get('site');
+            dd($site);   
+        }
+    }
+    // 忘记密码
+    public function remember (Request $request, $mode, $uId) {
+        $variable = User::where('uId', $uId)->first();
+        switch ($mode) {
+            case 'email':
+                $length = 6;
+                $code = rand(pow(10,($length-1)), pow(10,$length)-1);
+                $to = $variable->$mode;
+                $flag = Mail::send('remembermail', [
+                    'name'=>$request->username,
+                    'qrcode'=> $code
+                ],function ($message) use($to) {
+                    $message->to($to)->subject('收好你的密钥（视觉码农）');
+                });
+                $variable->remember_token = $code;
+                $variable->update();
+                break;
+        }
+        return json_encode(array(
+            'status'=> 1,
+            'msg'=> '操作成功，验证码已经发送至您的邮箱，请查收！',
+            'password'=>$variable->password
+        ));
     }
 }
