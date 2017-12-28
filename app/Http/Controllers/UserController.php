@@ -229,12 +229,30 @@ class UserController extends Controller
                 });
                 $variable->remember_token = $code;
                 $variable->update();
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '操作成功，验证码已经发送至您的邮箱，请查收！',
+                    'password'=>$variable->password
+                ));
+                break;
+            case 'phone':
+                header("Content-type: application/json; charset=utf-8");
+                $length = 6;
+                $code = rand(pow(10,($length-1)), pow(10,$length)-1);
+                $params = array(
+                    'mobile' => $variable->phone,
+                    'content' => '【视觉码农】：您本次的验证码为：'.$code.'，请勿泄露该验证码！',
+                    'appkey' => '3337a274860d078331853490716ce6e6'
+                );
+                $url = 'https://way.jd.com/chuangxin/dxjk';
+                $result = wx_http_request($url, $params );
+                return $result;
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '操作成功，验证码已经发送至您的手机，请注意查收！',
+                    'result'=>$result
+                ));
                 break;
         }
-        return json_encode(array(
-            'status'=> 1,
-            'msg'=> '操作成功，验证码已经发送至您的邮箱，请查收！',
-            'password'=>$variable->password
-        ));
     }
 }
