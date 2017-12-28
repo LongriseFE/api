@@ -65,7 +65,8 @@ class UserController extends Controller
                             'msg'=> $request->$mode.'已被占用！'
                         ));
                     } else {
-                        $variable->uId = md5(uniqid());
+                        $un = md5(uniqid());
+                        $variable->uId = $un;
                         foreach($req as $key => $value) {
                             if ($key === 'password') {
                                 $variable->$key=md5($value);
@@ -74,18 +75,28 @@ class UserController extends Controller
                             }
                         }
                         $variable->save();
+                        //注册成功，发送验证邮件
+                        switch ($mode) {
+                            case 'email':
+                                $qrcode = '用户名：'. $request->username.'  邮箱：'.$request->$mode.'  密码：'.$request->password;
+                                break;
+                            case 'phone':
+                                $qrcode = '用户名：'. $request->username.'  手机号：'.$request->$mode.'  密码：'.$request->password;
+                                break;
+                        }
+                        $flag = Mail::send('registermail', [
+                            'name'=>$request->username,
+                            'qrcode'=> $qrcode
+                        ],function ($message) {
+                            $to = '1719904000@qq.com';
+                            $message->to($to)->subject('恭喜您成功注册（视觉码农）会员！');
+                        });
                         return json_encode(array(
                             'status'=> 1,
                             'msg'=> '注册成功！',
                             'data'=> $variable,
                             'mail'=> $flag
                         ));
-                        //注册成功，发送验证邮件
-                        $name="前端码农俱乐部";
-                        $flag = Mail::send('registermail', ['name'=>$name],function ($message) {
-                            $to = '1719904000@qq.com';
-                            $message->to($to)->subject('测试邮件');
-                        });
                     }
                 }
             } else {
