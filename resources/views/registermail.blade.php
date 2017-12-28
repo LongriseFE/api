@@ -12,14 +12,6 @@
 
         <!-- Styles -->
         <style>
-            html, body {
-                background-color: #fff;
-                color: #666;
-                font-family: '微软雅黑';
-                font-weight: 100;
-                height: 100vh;
-                margin: 0;
-            }
             .content{
                 border:1px solid #eee;
                 padding:20px;
@@ -28,6 +20,7 @@
                 box-shadow: 0 1px 5px #ccc;
                 margin:10px;
                 width:800px;
+                font-family: '微软雅黑';
             }
             .v-m{
                 vertical-align:middle;

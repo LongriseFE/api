@@ -9,6 +9,7 @@ use Mail;
 
 class UserController extends Controller
 {
+    // 用户注册
     public function register (Request $request, $mode) {
         $variable = new User();
         $params = null;
@@ -123,6 +124,85 @@ class UserController extends Controller
                 'status'=> 0,
                 'msg'=> '通过'.$mode.'注册参数不正确，正确格式如下！',
                 'params'=>$params
+            ));
+        }
+    }
+    // 用户登录
+    public function login (Request $request) {
+        $req = $request->all();
+        $recieve = array();
+        $params = array(
+            'username',
+            'email',
+            'phone',
+            'password'
+        );
+        foreach($req as $key => $value) {
+            array_push($recieve, $key);
+        }
+        if (count($req) > 2) {
+            return json_encode(array(
+                'status'=> 0,
+                'msg'=> '参数错误！'
+            ));
+        } else if (count(array_diff($params, $recieve)) === 2) {
+            $variable = null;
+            if ($request->username) {
+                if (User::where('username', $request->username)->first()) {
+                    $variable = User::where('username', $request->username)->where('password', md5($request->password))->first();
+                } else {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '登录失败，不存在该用户名，请检查后重试！'
+                    ));
+                }
+            } else if ($request->email) {
+                if (preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $request->email)) {
+                    if (User::where('email', $request->email)->first()) {
+                        $variable = User::where('email', $request->email)->where('password', md5($request->password))->first();
+                    } else {
+                        return json_encode(array(
+                            'status'=> 0,
+                            'msg'=> '登录失败，该邮箱尚未注册本站会员，请检查后重试！'
+                        ));
+                    }
+                } else {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '登录失败，邮箱格式有误！'
+                    ));
+                }
+            } else if ($request->phone) {
+                if (preg_match('/^1[34578]{1}\d{9}$/', $request->phone)) {
+                    if (User::where('phone', $request->phone)->first()) {
+                        $variable = User::where('phone', $request->phone)->where('password', md5($request->password))->first();
+                    } else {
+                        return json_encode(array(
+                            'status'=> 0,
+                            'msg'=> '登录失败，该手机尚未注册本站会员，请检查后重试！'
+                        ));
+                    }
+                } else {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '登录失败，手机号格式有误！'
+                    ));
+                }
+            }
+            if ($variable) {
+                $request->session()->put('username', $variable->username);
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '登录成功！',
+                    'data'=> $variable,
+                    'online'=> $request->session()->all()
+                ));
+            }
+        } else {
+            return json_encode(array(
+                'status'=> 0,
+                'msg'=> '参数错误！',
+                'content'=>'username、email、phone三者任选其一，password为必须！'
             ));
         }
     }
