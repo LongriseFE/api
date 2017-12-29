@@ -72,7 +72,7 @@
             </h1>
             <p>恭喜<span class="text">{{$name}}</span>成功注册本站会员，该邮箱将作为日后修改密码、找回密码的唯一凭证，请知悉！如果您忘记登录密码或者用户名，您可通过扫描以下二维码重新获取您的用户信息，请务必妥善保存该二维码！</p>
             <h2 class="sub-title">二维码名片</h2>
-            {!! QrCode::size(200)->color(230,76,101)->backgroundColor(252,252,252)->margin(1)->encoding('UTF-8')->generate($qrcode);!!}
+            <img src="{!!$message->embedData(QrCode::format('png')->encoding('UTF-8')->size(150)->color(21,139,201)->backgroundColor(239,245,251)->generate(".$qrcode."), 'QrCode.png', 'image/png')!!}">
             <div class="info">
                 <p>永兴元视觉创意中心</p>
                 <p>{{date('Y-m-d H:i:s')}}</p>

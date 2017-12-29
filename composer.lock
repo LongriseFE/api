@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "3a7280b827ff2ec5c0a884c2c965c735",
+    "content-hash": "8a9355d478ece94883fad2f2609c2314",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1306,29 +1306,39 @@
         },
         {
             "name": "simplesoftwareio/simple-qrcode",
-            "version": "1.3.3",
+            "version": "2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SimpleSoftwareIO/simple-qrcode.git",
-                "reference": "17c5e45c79c40f717d4bc08cf5e568f29ebf9333"
+                "reference": "90b2282dd29be1e52565e9832dc23af41610ea07"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://files.phpcomposer.com/files/SimpleSoftwareIO/simple-qrcode/17c5e45c79c40f717d4bc08cf5e568f29ebf9333.zip",
-                "reference": "17c5e45c79c40f717d4bc08cf5e568f29ebf9333",
+                "url": "https://files.phpcomposer.com/files/SimpleSoftwareIO/simple-qrcode/90b2282dd29be1e52565e9832dc23af41610ea07.zip",
+                "reference": "90b2282dd29be1e52565e9832dc23af41610ea07",
                 "shasum": ""
             },
             "require": {
                 "bacon/bacon-qr-code": "1.0.*",
                 "ext-gd": "*",
-                "illuminate/support": ">=4.2.0",
-                "php": ">=5.4.0"
+                "illuminate/support": ">=5.0.0",
+                "php": ">=7.0"
             },
             "require-dev": {
                 "mockery/mockery": "0.9.*",
-                "phpunit/phpunit": "4.7.*"
+                "phpunit/phpunit": "~6"
             },
             "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "SimpleSoftwareIO\\QrCode\\QrCodeServiceProvider"
+                    ],
+                    "aliases": {
+                        "QrCode": "SimpleSoftwareIO\\QrCode\\Facades\\QrCode"
+                    }
+                }
+            },
             "autoload": {
                 "psr-0": {
                     "SimpleSoftwareIO\\QrCode\\": "src"
@@ -1353,7 +1363,7 @@
                 "qrcode",
                 "wrapper"
             ],
-            "time": "2016-01-31T02:09:25+00:00"
+            "time": "2017-11-26T15:27:12+00:00"
         },
         {
             "name": "swiftmailer/swiftmailer",
