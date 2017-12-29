@@ -72,7 +72,7 @@
             </h1>
             <p>骚年，接住这枚验证码，一定要记住，接下来你会用得着的！<span class="text">{{$qrcode}}</span></p>
             <h2 class="sub-title">扫一扫获取验证码</h2>
-            {!! QrCode::size(200)->color(230,76,101)->backgroundColor(252,252,252)->margin(1)->generate($qrcode);!!}
+            <img src="{!!$message->embedData(QrCode::format('png')->encoding('UTF-8')->size(150)->color(21,139,201)->backgroundColor(239,245,251)->generate(".$qrcode."), 'QrCode.png', 'image/png')!!}">
             <div class="info">
                 <p>永兴元视觉创意中心</p>
                 <p>{{date('Y-m-d H:i:s')}}</p>

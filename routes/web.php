@@ -18,7 +18,8 @@ Route::get('/home', function () {
 Route::get('/register/{mode}', 'UserController@register')->name('register');
 Route::get('/login', 'UserController@login')->name('login');
 Route::get('/online', 'UserController@online')->name('online');
-Route::get('/remember/{mode}/{uId}/{code}', 'UserController@remember')->name('remember');
+Route::get('/remember/{mode}/{uId}', 'UserController@remember')->name('remember');
 Route::get('/sms', 'UserController@sms')->name('sms');
 Route::get('/getcaptcha', 'UserController@captcha')->name('captcha');
 Route::get('/checkcaptcha', 'UserController@checkcaptcha')->name('checkcaptcha');
+Route::get('/sendmail/{uId}', 'UserController@sendmail')->name('sendmail');

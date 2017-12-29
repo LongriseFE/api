@@ -233,31 +233,67 @@ class UserController extends Controller
         }
     }
     // 忘记密码
-    public function remember (Request $request, $mode, $uId, $code) {
+    public function remember (Request $request, $mode, $uId) {
         $variable = User::where('uId', $uId)->first();
+        $captcha = $request->session()->get('captcha');
         switch ($mode) {
             case 'email':
-                $length = 6;
-                $code = rand(pow(10,($length-1)), pow(10,$length)-1);
-                $to = $variable->$mode;
-                $flag = Mail::send('remembermail', [
-                    'name'=>$request->username,
-                    'qrcode'=> $code
-                ],function ($message) use($to) {
-                    $message->to($to)->subject('收好你的密钥（视觉码农）');
-                });
-                $variable->remember_token = $code;
-                $variable->update();
-                return json_encode(array(
-                    'status'=> 1,
-                    'msg'=> '操作成功，验证码已经发送至您的邮箱，请查收！',
-                    'password'=>$variable->password
-                ));
+                if ($request->captcha !== $captcha) {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '图片验证码输入有误！'
+                    ));
+                } else {
+                    if ($request->code !== $variable->remember_token) {
+                        return json_encode(array(
+                            'status'=> 0,
+                            'msg'=> '错误，请输入您邮箱收到的6位数字验证码！'
+                        ));
+                    } else {
+                        $variable->password = md5($request->password);
+                        $variable->update();
+                        return json_encode(array(
+                            'status'=> 1,
+                            'msg'=> '密码修改成功，请牢记您的新密码！'
+                        ));
+                    }
+                }
                 break;
             case 'phone':
-                return json_encode(array(
-                    'code'=>$request->session()->get('sms')
-                ));
+                $code = $request->session()->get('sms');
+                if (intval($request->code) !== $code) {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '验证码输入有误，请重新输入！'
+                    ));
+                } else {
+                    if (strlen($request->password) <6 || strlen($request->password) > 16) {
+                        return json_encode(array(
+                            'status'=> 0,
+                            'msg'=> '新密码必须是6-16位！'
+                        ));
+                    } else {
+                        $variable = User::where('uId', $uId)->first();
+                        if (!$variable->phone) {
+                            return json_encode(array(
+                                'status'=> 0,
+                                'msg'=> '尚未绑定任何手机号，无法通过手机号修改密码！'
+                            ));
+                        }else if ($variable->phone === $request->phone) {
+                            $variable -> password = md5($request->password);
+                            $variable->update();
+                            return json_encode(array(
+                                'status'=> 1,
+                                'msg'=> '密码修改成功，请牢记您的新密码！'
+                            ));
+                        } else {
+                            return json_encode(array(
+                                'status'=> 0,
+                                'msg'=> '手机号与账户不匹配，修改失败！'
+                            ));
+                        }
+                    }
+                }
                 break;
         }
     }
@@ -444,6 +480,31 @@ class UserController extends Controller
         header("Cache-Control: no-cache, must-revalidate");
         header('Content-Type: image/jpeg');
         $builder->output();
+    }
+    public function sendmail (Request $request, $uId) {
+        $variable = User::where('uId', $uId)->first();
+        if (!$variable->email){
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'您尚未绑定任何邮箱，不能发送邮件！'
+            ));
+        } else {
+            $length = 6;
+            $random = rand(pow(10,($length-1)), pow(10,$length)-1);
+            $to = $variable->email;
+            $flag = Mail::send('remembermail', [
+                'name'=>$request->username,
+                'qrcode'=> $random
+            ],function ($message) use($to) {
+                $message->to($to)->subject('收好你的密钥（视觉码农）');
+            });
+            $variable->remember_token = $random;
+            $variable->update();
+            return json_encode(array(
+                'status'=> 1,
+                'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
+            ));
+        }
     }
     public function checkcaptcha(Request $request) {
         return $request->session()->get('captcha');
