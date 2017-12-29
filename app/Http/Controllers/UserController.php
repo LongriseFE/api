@@ -467,6 +467,7 @@ class UserController extends Controller
             }
         }
     }
+    // 图片验证码
     public function captcha (Request $request) {
         $builder = new CaptchaBuilder;
         //可以设置图片宽高及字体
@@ -481,6 +482,7 @@ class UserController extends Controller
         header('Content-Type: image/jpeg');
         $builder->output();
     }
+    // 发送邮件验证码
     public function sendmail (Request $request, $uId) {
         $variable = User::where('uId', $uId)->first();
         if (!$variable->email){
@@ -505,6 +507,44 @@ class UserController extends Controller
                 'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
             ));
         }
+    }
+    public function editpassword (Request $request, $uId) {
+        $variable = User::where('uId', $uId)->first();
+        if (!$request->old || !$request->new || !$request->captcha) {
+            return json_encode(array(
+                'status'=> 0,
+                'msg'=> '参数有误！'
+            ));
+        } else if ($request->captcha !== $request->session()->get('captcha')) {
+            return json_encode(array(
+                'status'=> 0,
+                'msg'=> '验证码输入有误！'
+            ));
+        } else if (md5($request->old) !== $variable->password) {
+            return json_encode(array(
+                'status'=> 0,
+                'msg'=> '您输入的旧密码有误！'
+            ));
+        } else {
+            if (strlen($request->new) > 16 || strlen($request->new) < 6) {
+                return json_encode(array(
+                    'status'=> 0,
+                    'msg'=> '您输入的新密码长度必须是6-16位！'
+                ));
+            } else {
+                $variable->password = md5($request->new);
+                $variable->update();
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '密码修改成功，请牢记您的新密码！'
+                ));
+            }
+        }
+    }
+    // 个人信息二维码
+    public function qrcodeinfo (Request $request, $uId) {
+        $variable = User::where('uId', $uId)->first();
+        return QrCode;
     }
     public function checkcaptcha(Request $request) {
         return $request->session()->get('captcha');

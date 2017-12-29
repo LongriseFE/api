@@ -23,3 +23,5 @@ Route::get('/sms', 'UserController@sms')->name('sms');
 Route::get('/getcaptcha', 'UserController@captcha')->name('captcha');
 Route::get('/checkcaptcha', 'UserController@checkcaptcha')->name('checkcaptcha');
 Route::get('/sendmail/{uId}', 'UserController@sendmail')->name('sendmail');
+Route::get('/editpassword/{uId}', 'UserController@editpassword')->name('editpassword');
+Route::get('/qrcodeinfo/{uId}', 'UserController@qrcodeinfo')->name('qrcodeinfo');
