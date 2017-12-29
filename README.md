@@ -65,3 +65,19 @@ password: 账户的密码
   "mail": null
 }
 ```
+## 发送短信验证码接口：
+[http://192.168.3.214/api/public/sms/{phone}?type=0](http://192.168.3.214/api/public/sms/)
+
+参数说明：
+phone：要接收验证码的手机号
+
+type：可选值（0：用户注册；1：修改密码；2：修改手机号）
+
+成功示例：
+``` json
+{
+  "status": 1,
+  "msg": "验证码发送成功！",
+  "code": 740914
+}
+```
