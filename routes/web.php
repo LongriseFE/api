@@ -25,3 +25,4 @@ Route::get('/checkcaptcha', 'UserController@checkcaptcha')->name('checkcaptcha')
 Route::get('/sendmail/{uId}', 'UserController@sendmail')->name('sendmail');
 Route::get('/editpassword/{uId}', 'UserController@editpassword')->name('editpassword');
 Route::get('/qrcodeinfo/{uId}', 'UserController@qrcodeinfo')->name('qrcodeinfo');
+Route::get('/destroy/user/{uId}', 'UserController@destroy')->name('destroy');

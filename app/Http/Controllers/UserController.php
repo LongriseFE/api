@@ -544,7 +544,51 @@ class UserController extends Controller
     // 个人信息二维码
     public function qrcodeinfo (Request $request, $uId) {
         $variable = User::where('uId', $uId)->first();
-        return QrCode;
+        return $variable;
+    }
+    // 删除用户（可以批量删除）
+    public function destroy (Request $request, $uId) {
+        $group = explode(',', $uId);
+        $deleted = array();
+        $notexist = array();
+        forEach($group as $key => $value){
+            $variable = User::where('uId', $value)->first();
+            if ($variable) {
+                array_push($deleted, $variable);
+                $variable->delete();
+            } else {
+                array_push($notexist, $value);
+            }
+        }
+        if (count($group) === 1) {
+            if ($notexist) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'该用户不存在！'
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'操作成功！',
+                    'delete'=>$deleted,
+                    'null'=>$notexist
+                ));
+            }
+        } else {
+            if ($notexist) {
+                return json_encode(array(
+                    'status'=>2,
+                    'msg'=>'操作成功，您所删除的用户有不存在的！'
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'操作成功，所有用户删除成功！',
+                    'delete'=>$deleted,
+                    'null'=>$notexist
+                ));
+            }
+        }
     }
     public function checkcaptcha(Request $request) {
         return $request->session()->get('captcha');
