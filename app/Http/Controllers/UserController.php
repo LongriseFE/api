@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Model\User;
 use Illuminate\Support\Facades\DB;
 use Gregwar\Captcha\CaptchaBuilder;
+use Illuminate\Support\Facades\Schema;
 use Mail;
 
 class UserController extends Controller
@@ -209,7 +210,7 @@ class UserController extends Controller
                 }
             }
             if ($variable) {
-                $request->session()->push('site.username', $variable->username);
+                $request->session()->put('site.username', $variable->username);
                 return json_encode(array(
                     'status'=> 1,
                     'msg'=> '登录成功！',
@@ -299,6 +300,7 @@ class UserController extends Controller
     }
 
     // 发送短信验证码接口
+    // http://localhost/api/public/sms?type=0&captcha=8j8m1&phone=18827078587
     public function sms (Request $request) {
         $type = $request->type;
         $captcha = $request->session()->get('captcha');
@@ -589,6 +591,35 @@ class UserController extends Controller
                 ));
             }
         }
+    }
+    // http://localhost/api/public/update/user/aeaf0141193fa664c6079610d270111b?userInfo={%22name%22:%22%E5%88%98%E5%8B%87%22,%22sex%22:0,%22qq%22:%22979741120%22,%22status%22:%200}
+    public function updateUserInfo (Request $request, $uId) {
+        $userInfo = json_decode($request->userInfo);
+        $variable = User::where('uId', $uId)->first();
+        $protect = array("id","uId","password", "username");
+        $columns = Schema::getColumnListing('users');
+        $editable = array_diff($columns, $protect);
+        $input = array();
+        foreach($userInfo as $key => $val) {
+            $variable->$key = $val;
+            array_push($input, $key);
+        }
+        $useless = array_diff($input, $editable);
+        if (!$useless) {
+            $variable->update();
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'修改成功！',
+            ));
+        }else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'修改失败，接收参数有误！',
+            ));
+        }
+    }
+    public function updatePhone (Request $request, $uId) {
+
     }
     public function checkcaptcha(Request $request) {
         return $request->session()->get('captcha');
