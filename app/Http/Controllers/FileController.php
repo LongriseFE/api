@@ -24,7 +24,7 @@ class FileController extends Request
                     $bool = Storage::disk('uploads')->put($filename, file_get_contents($realPath));
                     if ($bool) {
                         $data = array(
-                            'path'=>public_path('uploads'),
+                            'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
                             'file'=> $filename,
                             'ext'=> $ext,
                             'size'=>$size
@@ -67,7 +67,7 @@ class FileController extends Request
             $boolean = Storage::disk('uploads')->put($output_file, base64_decode($files[1]));
             if ($boolean) {
                 $data = array(
-                    'path'=>null,
+                    'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
                     'file'=>$output_file
                 );
                 return json_encode(array(
