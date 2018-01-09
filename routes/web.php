@@ -23,3 +23,4 @@ Route::get('/qrcodeinfo/{uId}', 'UserController@qrcodeinfo')->name('qrcodeinfo')
 Route::get('/destroy/user/{uId}', 'UserController@destroy')->name('destroyuser');
 Route::get('/update/user/{uId}', 'UserController@updateUserInfo')->name('updateuserInfo');
 Route::get('/update/phone/{uId}', 'UserController@updatePhone')->name('updatePhone');
+// file
