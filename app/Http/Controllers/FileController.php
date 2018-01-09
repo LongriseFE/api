@@ -59,4 +59,33 @@ class FileController extends Request
            ));
        }
    }
+   public function base64 (Request $request) {
+       $files = $request->base64;
+       if ($files) {
+            $files = explode(',', $files);
+            $output_file = date('YmdHiS').uniqid().'.jpg';
+            $boolean = Storage::disk('uploads')->put($output_file, base64_decode($files[1]));
+            if ($boolean) {
+                $data = array(
+                    'path'=>null,
+                    'file'=>$output_file
+                );
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'上传成功！',
+                    'data'=> $data
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'上传失败，请重试！'
+                ));
+            }
+       } else {
+           return json_encode(array(
+               'status'=>0,
+               'msg'=>'参数错误！'
+           ));
+       }
+   }
 }
