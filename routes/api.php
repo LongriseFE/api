@@ -44,3 +44,4 @@ Route::match(['get','post'],'/remove/message', 'MessageController@remove')->name
 Route::match(['get','post'],'/send/message', 'MessageController@add')->name('addmessage');
 // 积分
 Route::match(['get','post'],'/score', 'UserController@score')->name('score');
+Route::match(['get','post'],'/set/score', 'ScoreController@add')->name('setscore');
