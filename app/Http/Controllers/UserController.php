@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Model\User;
+use App\Http\Model\Message;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Mail;
@@ -13,6 +14,7 @@ class UserController extends Controller
     // 用户注册
     public function register (Request $request) {
         $variable = new User();
+        $msg = new Message();
         $params = null;
         $req = $request -> all();
         $receive = array();
@@ -102,6 +104,12 @@ class UserController extends Controller
                                         $message->to($to)->subject('恭喜您成功注册（视觉码农）会员！');
                                     });
                                     $variable->save();
+                                    $msg->uId = md5(uniqid());
+                                    $msg->title='欢迎注册本站会员!';
+                                    $msg->content='恭喜您成功通过邮箱'.$email.'注册本站会员!';
+                                    $msg->read = 0;
+                                    $msg->to = $un;
+                                    $msg->save();
                                     return json_encode(array(
                                         'status'=> 1,
                                         'msg'=> '注册成功！',
@@ -120,6 +128,12 @@ class UserController extends Controller
                                     $original = $request->session()->get('sms');
                                     if ($original === intval($request->code)) {
                                         $variable->save();
+                                        $msg->uId = md5(uniqid());
+                                        $msg->title='欢迎注册本站会员!';
+                                        $msg->content='恭喜您成功通过手机'.$request->phone.'注册本站会员!';
+                                        $msg->read = 0;
+                                        $msg->to = $un;
+                                        $msg->save();
                                         return json_encode(array(
                                             'status'=> 1,
                                             'msg'=> '注册成功！',
@@ -239,6 +253,7 @@ class UserController extends Controller
     // 忘记密码
     public function password (Request $request) {
         $variable = User::where('uId', $request->uId)->first();
+        $msg = new Message();
         $code = $variable->remember_token;
         $mode = null;
         if ($request->phone && !$request->email) {
@@ -263,6 +278,12 @@ class UserController extends Controller
                     }else if ($variable->phone === $request->phone) {
                         $variable -> password = md5($request->password);
                         $variable->update();
+                        $msg->uId = md5(uniqid());
+                        $msg->title='找回密码!';
+                        $msg->content='恭喜您成功通过手机'.$request->phone.'找回密码,新密码是:('.$request->password.'),请牢记!';
+                        $msg->read = 0;
+                        $msg->to = $request->uId;
+                        $msg->save();
                         return json_encode(array(
                             'status'=> 1,
                             'msg'=> '密码修改成功，请牢记您的新密码！'
@@ -295,6 +316,12 @@ class UserController extends Controller
                 } else {
                     $variable->password = md5($request->password);
                     $variable->update();
+                    $msg->uId = md5(uniqid());
+                    $msg->title='找回密码!';
+                    $msg->content='恭喜您成功通过邮箱'.$request->email.'找回密码,新密码是:('.$request->password.'),请牢记!';
+                    $msg->read = 0;
+                    $msg->to = $request->uId;
+                    $msg->save();
                     return json_encode(array(
                         'status'=> 1,
                         'msg'=> '密码修改成功，请牢记您的新密码！'
@@ -366,6 +393,7 @@ class UserController extends Controller
     }
     public function updatePassword (Request $request) {
         $uId = $request->uId;
+        $msg = new Message();
         $variable = User::where('uId', $uId)->first();
         if (!$request->old || !$request->new || !$request->captcha) {
             return json_encode(array(
@@ -391,6 +419,12 @@ class UserController extends Controller
             } else {
                 $variable->password = md5($request->new);
                 $variable->update();
+                $msg->uId = md5(uniqid());
+                $msg->title='修改密码!';
+                $msg->content='恭喜您成功修改密码,新密码是:('.$request->new.'),请妥善保存!';
+                $msg->read = 0;
+                $msg->to = $request->uId;
+                $msg->save();
                 return json_encode(array(
                     'status'=> 1,
                     'msg'=> '密码修改成功，请牢记您的新密码！'
@@ -446,6 +480,7 @@ class UserController extends Controller
     }
     public function updateUserInfo (Request $request) {
         $uId = $request->uId;
+        $msg = new Message();
         $userInfo = json_decode($request->userInfo);
         $variable = User::where('uId', $uId)->first();
         $protect = array("id","uId","password", "username");
@@ -459,6 +494,12 @@ class UserController extends Controller
         $useless = array_diff($input, $editable);
         if (!$useless) {
             $variable->update();
+            $msg->uId = md5(uniqid());
+            $msg->title='修改个人资料!';
+            $msg->content='恭喜您成功修改个人资料!';
+            $msg->read = 0;
+            $msg->to = $request->uId;
+            $msg->save();
             return json_encode(array(
                 'status'=>1,
                 'msg'=>'修改成功！',
@@ -473,6 +514,7 @@ class UserController extends Controller
     }
     public function updatePhone (Request $request) {
         $variable = User::where('uId', $request->uId)->first();
+        $msg = new Message();
         $old = $request->old;
         $new = $request->new;
         $code = $request->code;
@@ -504,6 +546,12 @@ class UserController extends Controller
         } else {
             $variable->phone = $new;
             $variable->update();
+            $msg->uId = md5(uniqid());
+            $msg->title='更换手机号码!';
+            $msg->content='恭喜您成功更换绑定手机,新手机号码是:'.$request->new;
+            $msg->read = 0;
+            $msg->to = $request->uId;
+            $msg->save();
             return json_encode(array(
                 'status'=>1,
                 'msg'=>'修改成功!'
@@ -512,6 +560,7 @@ class UserController extends Controller
     }
     public function updateEmail (Request $request) {
         $variable = User::where('uId', $request->uId)->first();
+        $msg = new Message();
         $old = $request->old;
         $new = $request->new;
         $code = $request->code;
@@ -550,6 +599,12 @@ class UserController extends Controller
             $variable->email = $new;
             $variable->remember_token = '';
             $variable->update();
+            $msg->uId = md5(uniqid());
+            $msg->title='更换邮箱!';
+            $msg->content='恭喜您成功更换绑定邮箱,新邮箱是:'.$request->new;
+            $msg->read = 0;
+            $msg->to = $request->uId;
+            $msg->save();
             return json_encode(array(
                 'status'=>1,
                 'msg'=>'修改成功!'
