@@ -675,4 +675,24 @@ class UserController extends Controller
             ));
         }
     }
+    // 积分
+    public function score (Request $request) {
+        $uId = $request -> uId;
+        $variable = User::where('uId', $uId)->first();
+        if ($variable) {
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'获取成功!',
+                'data'=>array(
+                    'balance'=>$variable->b_score,
+                    'total'=>$variable->b_score
+                )
+            ));
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'不存在该用户!'
+            ));
+        }
+    }
 }
