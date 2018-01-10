@@ -1,6 +1,11 @@
 # api
 laravel版本api
 ## 用户注册
+
+api文档
+
+[http://apizza.cc/console/project/7da275a1c0535baad035bc581d0189ad/browse](http://apizza.cc/console/project/7da275a1c0535baad035bc581d0189ad/browse)
+
 用户注册分为通过邮箱和手机注册，请求的api接口分别如下：
 
 提示：localhost会随着服务器地址而变！

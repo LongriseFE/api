@@ -35,3 +35,9 @@ Route::group(['middleware'=>['web']], function () {
     Route::match(['get','post'],'/update/phone', 'UserController@updatePhone')->name('updatePhone');
     Route::match(['get','post'],'/update/email', 'UserController@updateEmail')->name('updateEmail');
 });
+
+// 消息模块
+Route::match(['get','post'],'/message', 'MessageController@message')->name('message');
+Route::match(['get','post'],'/update/message', 'MessageController@read')->name('readmessage');
+Route::match(['get','post'],'/remove/message', 'MessageController@remove')->name('removemessage');
+Route::match(['get','post'],'/send/message', 'MessageController@add')->name('addmessage');
