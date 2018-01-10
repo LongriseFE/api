@@ -11,29 +11,34 @@ use Mail;
 class UserController extends Controller
 {
     // 用户注册
-    public function register (Request $request, $mode) {
+    public function register (Request $request) {
         $variable = new User();
         $params = null;
         $req = $request -> all();
         $receive = array();
         $correct = false;
-        switch ($mode) {
-            case 'email':
-                $params = array(
-                    "username",
-                    "email",
-                    "password",
-                    "captcha"
-                );
-                break;
-            case 'phone':
-                $params = array(
-                    "username",
-                    "phone",
-                    "password",
-                    "code"
-                );
-                break;
+        $mode = null;
+        if ($request->email && !$request->phone) {
+            $params = array(
+                "username",
+                "email",
+                "password",
+                "captcha"
+            );
+            $mode = 'email';
+        } else if (!$request->email && $request->phone) {
+            $params = array(
+                "username",
+                "phone",
+                "password",
+                "code"
+            );
+            $mode = 'phone';
+        } else {
+            return json_encode(array(
+                'status'=> 0,
+                'msg'=> '参数有误！'
+            ));
         }
         foreach($req as $key => $value) {
             array_push($receive, $key);
@@ -154,19 +159,25 @@ class UserController extends Controller
             'username',
             'email',
             'phone',
-            'password'
+            'password',
+            'captcha'
         );
         foreach($req as $key => $value) {
             array_push($recieve, $key);
         }
-        if (count($req) > 2) {
+        if (count($req) > 3) {
             return json_encode(array(
                 'status'=> 0,
                 'msg'=> '参数错误！'
             ));
         } else if (count(array_diff($params, $recieve)) === 2) {
             $variable = null;
-            if ($request->username) {
+            if ($request->captcha !== $request->session()->get('captcha')) {
+                return json_encode(array(
+                    'status'=> 0,
+                    'msg'=> '验证码错误！'
+                ));
+            } else if ($request->username) {
                 if (User::where('username', $request->username)->first()) {
                     $variable = User::where('username', $request->username)->where('password', md5($request->password))->first();
                 } else {
@@ -225,107 +236,136 @@ class UserController extends Controller
             ));
         }
     }
-    // 在线人数统计
-    public function online (Request $request) {
-        if ($request->session()->has('site')) {
-            $site = $request->session()->get('site');
-            dd($site);   
-        }
-    }
     // 忘记密码
-    public function remember (Request $request, $mode, $uId) {
-        $variable = User::where('uId', $uId)->first();
-        $captcha = $request->session()->get('captcha');
-        switch ($mode) {
-            case 'email':
-                if ($request->captcha !== $captcha) {
+    public function password (Request $request) {
+        $variable = User::where('uId', $request->uId)->first();
+        $code = $variable->remember_token;
+        $mode = null;
+        if ($request->phone && !$request->email) {
+            $code = $request->session()->get('sms');
+            if (intval($request->code) !== $code) {
+                return json_encode(array(
+                    'status'=> 0,
+                    'msg'=> '验证码输入有误，请重新输入！'
+                ));
+            } else {
+                if (strlen($request->password) <6 || strlen($request->password) > 16) {
                     return json_encode(array(
                         'status'=> 0,
-                        'msg'=> '图片验证码输入有误！'
+                        'msg'=> '新密码必须是6-16位！'
                     ));
                 } else {
-                    if ($request->code !== $variable->remember_token) {
+                    if (!$variable->phone) {
                         return json_encode(array(
                             'status'=> 0,
-                            'msg'=> '错误，请输入您邮箱收到的6位数字验证码！'
+                            'msg'=> '尚未绑定任何手机号，无法通过手机号修改密码！'
                         ));
-                    } else {
-                        $variable->password = md5($request->password);
+                    }else if ($variable->phone === $request->phone) {
+                        $variable -> password = md5($request->password);
                         $variable->update();
                         return json_encode(array(
                             'status'=> 1,
                             'msg'=> '密码修改成功，请牢记您的新密码！'
                         ));
-                    }
-                }
-                break;
-            case 'phone':
-                $code = $request->session()->get('sms');
-                if (intval($request->code) !== $code) {
-                    return json_encode(array(
-                        'status'=> 0,
-                        'msg'=> '验证码输入有误，请重新输入！'
-                    ));
-                } else {
-                    if (strlen($request->password) <6 || strlen($request->password) > 16) {
+                    } else {
                         return json_encode(array(
                             'status'=> 0,
-                            'msg'=> '新密码必须是6-16位！'
+                            'msg'=> '手机号与账户不匹配，修改失败！'
                         ));
-                    } else {
-                        $variable = User::where('uId', $uId)->first();
-                        if (!$variable->phone) {
-                            return json_encode(array(
-                                'status'=> 0,
-                                'msg'=> '尚未绑定任何手机号，无法通过手机号修改密码！'
-                            ));
-                        }else if ($variable->phone === $request->phone) {
-                            $variable -> password = md5($request->password);
-                            $variable->update();
-                            return json_encode(array(
-                                'status'=> 1,
-                                'msg'=> '密码修改成功，请牢记您的新密码！'
-                            ));
-                        } else {
-                            return json_encode(array(
-                                'status'=> 0,
-                                'msg'=> '手机号与账户不匹配，修改失败！'
-                            ));
-                        }
                     }
                 }
-                break;
+            }
+        } else if (!$request->phone && $request->email) {
+            if ($request->captcha !== $request->session()->get('captcha')) {
+                return json_encode(array(
+                    'status'=> 0,
+                    'msg'=> '验证码输入有误！'
+                ));
+            } else if ($variable->email !== $request->email) {
+                return json_encode(array(
+                    'status'=> 0,
+                    'msg'=> '您提供的邮箱与注册邮箱不一致！'
+                ));
+            } else {
+                if ($request->code !== $variable->remember_token) {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '错误，请输入您邮箱收到的6位数字验证码！'
+                    ));
+                } else {
+                    $variable->password = md5($request->password);
+                    $variable->update();
+                    return json_encode(array(
+                        'status'=> 1,
+                        'msg'=> '密码修改成功，请牢记您的新密码！'
+                    ));
+                }
+            }
         }
-    }
-
-    
+    }  
     // 发送邮件验证码
-    public function sendmail (Request $request, $uId) {
+    public function sendCode (Request $request) {
+        $uId = $request->uId;
+        $type = intval($request->type);
         $variable = User::where('uId', $uId)->first();
-        if (!$variable->email){
-            return json_encode(array(
-                'status'=>0,
-                'msg'=>'您尚未绑定任何邮箱，不能发送邮件！'
-            ));
+        if ($type) {
+            // 修改邮箱
+            $email = $request->email;
+            if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $email)) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'邮箱格式错误!'
+                ));
+            } else if (User::where('email', $email)->first()) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'该邮箱已被绑定,请更换新邮箱!'
+                ));
+            } else {
+                $length = 6;
+                $random = rand(pow(10,($length-1)), pow(10,$length)-1);
+                $to = $email;
+                $flag = Mail::send('remembermail', [
+                    'name'=>$request->username,
+                    'qrcode'=> $random
+                ],function ($message) use($to) {
+                    $message->to($to)->subject('收好你的密钥（视觉码农）');
+                });
+                $variable->remember_token = $random;
+                $variable->update();
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
+                ));
+            }
         } else {
-            $length = 6;
-            $random = rand(pow(10,($length-1)), pow(10,$length)-1);
-            $to = $variable->email;
-            $flag = Mail::send('remembermail', [
-                'name'=>$request->username,
-                'qrcode'=> $random
-            ],function ($message) use($to) {
-                $message->to($to)->subject('收好你的密钥（视觉码农）');
-            });
-            $variable->remember_token = $random;
-            $variable->update();
-            return json_encode(array(
-                'status'=> 1,
-                'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
-            ));
+            // 修改密码
+            if (!$variable->email){
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'您尚未绑定任何邮箱，不能发送邮件！'
+                ));
+            } else {
+                $length = 6;
+                $random = rand(pow(10,($length-1)), pow(10,$length)-1);
+                $to = $variable->email;
+                $flag = Mail::send('remembermail', [
+                    'name'=>$request->username,
+                    'qrcode'=> $random
+                ],function ($message) use($to) {
+                    $message->to($to)->subject('收好你的密钥（视觉码农）');
+                });
+                $variable->remember_token = $random;
+                $variable->update();
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
+                ));
+            }
         }
     }
-    public function editpassword (Request $request, $uId) {
+    public function updatePassword (Request $request) {
+        $uId = $request->uId;
         $variable = User::where('uId', $uId)->first();
         if (!$request->old || !$request->new || !$request->captcha) {
             return json_encode(array(
@@ -358,13 +398,9 @@ class UserController extends Controller
             }
         }
     }
-    // 个人信息二维码
-    public function qrcodeinfo (Request $request, $uId) {
-        $variable = User::where('uId', $uId)->first();
-        return $variable;
-    }
     // 删除用户（可以批量删除）
-    public function destroy (Request $request, $uId) {
+    public function remove (Request $request) {
+        $uId = $request->uId;
         $group = explode(',', $uId);
         $deleted = array();
         $notexist = array();
@@ -386,7 +422,7 @@ class UserController extends Controller
             } else {
                 return json_encode(array(
                     'status'=>1,
-                    'msg'=>'操作成功！',
+                    'msg'=>'删除成功！',
                     'delete'=>$deleted,
                     'null'=>$notexist
                 ));
@@ -395,7 +431,8 @@ class UserController extends Controller
             if ($notexist) {
                 return json_encode(array(
                     'status'=>2,
-                    'msg'=>'操作成功，您所删除的用户有不存在的！'
+                    'msg'=>'操作成功，您所删除的用户有不存在的！',
+                    'data'=>$notexist
                 ));
             } else {
                 return json_encode(array(
@@ -407,8 +444,8 @@ class UserController extends Controller
             }
         }
     }
-    // http://localhost/api/public/update/user/aeaf0141193fa664c6079610d270111b?userInfo={%22name%22:%22%E5%88%98%E5%8B%87%22,%22sex%22:0,%22qq%22:%22979741120%22,%22status%22:%200}
-    public function updateUserInfo (Request $request, $uId) {
+    public function updateUserInfo (Request $request) {
+        $uId = $request->uId;
         $userInfo = json_decode($request->userInfo);
         $variable = User::where('uId', $uId)->first();
         $protect = array("id","uId","password", "username");
@@ -425,6 +462,7 @@ class UserController extends Controller
             return json_encode(array(
                 'status'=>1,
                 'msg'=>'修改成功！',
+                'data'=>$variable
             ));
         }else {
             return json_encode(array(
@@ -433,7 +471,89 @@ class UserController extends Controller
             ));
         }
     }
-    public function updatePhone (Request $request, $uId) {
-
+    public function updatePhone (Request $request) {
+        $variable = User::where('uId', $request->uId)->first();
+        $old = $request->old;
+        $new = $request->new;
+        $code = $request->code;
+        if (!$variable->phone){
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'您尚未绑定手机号,请绑定手机号!'
+            ));
+        } else if ($variable->phone !== $old) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'旧手机号填写有误,请重试!'
+            ));
+        } else if (!$new) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'请填写新手机号!'
+            ));
+        } else if (intval($code) !== $request->session()->get('sms')) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'验证码错误!'
+            ));
+        } else if (!preg_match("/^1[34578]{1}\d{9}$/", $new)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'手机号格式错误!'
+            ));
+        } else {
+            $variable->phone = $new;
+            $variable->update();
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'修改成功!'
+            ));
+        }
+    }
+    public function updateEmail (Request $request) {
+        $variable = User::where('uId', $request->uId)->first();
+        $old = $request->old;
+        $new = $request->new;
+        $code = $request->code;
+        $captcha = $request->captcha;
+        if (!$variable->email){
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'您尚未绑定邮箱,请前往绑定!'
+            ));
+        } else if ($variable->email !== $old) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'旧邮箱填写错误,请重试!'
+            ));
+        } else if (!$new) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'请填写新邮箱!'
+            ));
+        } else if (intval($code) !== intval($variable->remember_token)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'验证码错误!'
+            ));
+        } else if ($captcha !== $request->session()->get('captcha')) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'图片验证码错误!'
+            ));
+        } else if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $new)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'邮箱格式错误!'
+            ));
+        } else {
+            $variable->email = $new;
+            $variable->remember_token = '';
+            $variable->update();
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'修改成功!'
+            ));
+        }
     }
 }

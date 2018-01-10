@@ -88,4 +88,36 @@ class FileController extends Request
            ));
        }
    }
+   // 删除文件
+   public function delete (Request $request) {
+        $file = $request->url;
+        $group = explode(',', $file);
+        foreach($group as $key => $value) {
+            $del = Storage::disk('uploads')->delete($value);
+        }
+        if ($del) {
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'文件删除成功!'
+            ));
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'删除失败,文件不存在!'
+            ));
+        }
+    }
+    public function downfile (Request $request) {
+        $file = $request->url;
+        $ext = explode('.', $file)[1];
+        $name = $request->name;
+        if (file_exists(realpath(base_path('storage/app/uploads')).'/'.$file)) {
+            return response()->download(realpath(base_path('storage/app/uploads')).'/'.$file, $name.'.'.$ext);
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'文件不存在!'
+            ));
+        }
+    }
 }

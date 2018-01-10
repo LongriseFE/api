@@ -43,10 +43,14 @@ class ToolController extends Controller
         $email = $request->email;
         $title = $request->title;
         $content = $request->content;
+        $file = $request->file;
         $flag = Mail::send('mail', [
             'content'=>$content
-        ],function ($message) use($email, $title, $content) {
+        ],function ($message) use($email, $title, $content,$file) {
             $message->to($email)->subject($title);
+            if ($file) {
+                $message->attach($file);
+            }
         });
         return json_encode(array(
             'status'=> 1,
