@@ -27,6 +27,7 @@ class CreateUsersTable extends Migration
             $table->integer('online')->nullable();
             $table->integer('sex')->nullable();
             $table->integer('status')->nullable();
+            $table->integer('score')->nullable();
             $table->string('qq')->nullable();
             $table->string('wechat')->nullable();
             $table->string('email', 25)->unique()->nullable();

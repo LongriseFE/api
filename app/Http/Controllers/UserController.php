@@ -7,6 +7,7 @@ use App\Http\Model\User;
 use App\Http\Model\Message;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Mail;
 
 class UserController extends Controller
@@ -608,6 +609,69 @@ class UserController extends Controller
             return json_encode(array(
                 'status'=>1,
                 'msg'=>'修改成功!'
+            ));
+        }
+    }
+    public function updateFace (Request $request) {
+        $uId = $request->uId;
+        $variable = User::where('uId', $uId)->first();
+        if ($request->isMethod('POST')) {
+            if($request->hasFile('file')) {
+                 $files = $request->file('file');
+                 if ($files->isValid()) {
+                     $originalName = $files->getClientOriginalName();  
+                     //扩展名  
+                     $size = $files->getClientSize();
+                     $ext = $files->getClientOriginalExtension(); 
+                     //文件类型  
+                     $type = $files->getClientMimeType();
+                     if ($type !== 'image/jpeg' || $type !== 'image/png') {
+                         return json_encode(array(
+                             'status'=>0,
+                             'msg'=> '只能上传图片(jpg,png)!'
+                         ));
+                     }
+                     //临时绝对路径  
+                     $realPath = $files->getRealPath();  
+                     $filename = date('YmdHiS').uniqid().'.'.$ext;  
+                     $bool = Storage::disk('uploads')->put($filename, file_get_contents($realPath));
+                     if ($bool) {
+                         $data = array(
+                             'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
+                             'file'=> $filename,
+                             'ext'=> $ext,
+                             'size'=>$size,
+                             'type'=>$type
+                         );
+                         $variable->cover = $filename;
+                         $variable->update();
+                         return json_encode(array(
+                             'status'=>1,
+                             'msg'=>'头像修改成功！',
+                             'data'=>$data
+                         ));
+                     } else {
+                         return json_encode(array(
+                             'status'=>0,
+                             'msg'=>'上传失败，请重试！'
+                         ));
+                     }
+                } else {
+                     return json_encode(array(
+                         'status'=>0,
+                         'msg'=>'文件无效！'
+                     ));
+                }
+            } else {
+                 return json_encode(array(
+                     'status'=>0,
+                     'data'=>'没有file'
+                 ));
+            }
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'上传文件只能是post请求！'
             ));
         }
     }

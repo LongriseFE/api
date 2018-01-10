@@ -18,6 +18,7 @@ Route::match(['get', 'post'], '/upfile', 'FileController@uploadFile')->name('upl
 Route::match(['get', 'post'], '/base64', 'FileController@base64')->name('base64');
 Route::match(['get', 'post'], '/delete', 'FileController@delete')->name('delete');
 Route::match(['get', 'post'], '/download', 'FileController@downfile')->name('downfile');
+Route::match(['get','post'],'/update/face', 'UserController@updateFace')->name('updateFace');
 //验证码
 Route::group(['middleware'=>['web']], function () {
     Route::match(['get', 'post'],'/captcha', 'ToolController@captcha')->name('captcha');
