@@ -18,16 +18,57 @@ class DriverController extends Controller
        } else {
             if (!$parent) {
                 // 在根目录创建
+                if (Storage::exists('pan/'.$dir)) {
+                    return json_encode(array(
+                        'status'=>0,
+                        'msg'=>'该目录已存在，请更换！'
+                    ));
+                }
                 Storage::makeDirectory('pan/'.$dir);
                 $directions = Storage::directories('pan');
                 $files = Storage::files('pan');
-                return $files;
             } else {
+                if (storage::exists('pan/'.$parent.'/'.$dir)) {
+                    return json_encode(array(
+                        'status'=>0,
+                        'msg'=>'该目录已存在，请更换！'
+                    ));
+                }
                 Storage::makeDirectory('pan/'.$parent.'/'.$dir);
                 $directions = Storage::directories('pan'.$parent);
                 $files = Storage::files('pan'.$parent);
-                return $files;
             }
+            $base = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/';
+            $dir = $request->parent;
+            $files = Storage::files(iconv('utf-8', 'gbk', 'pan/'.$dir));
+            $directions = Storage::directories('pan/'.$dir);
+            $all = array();
+            foreach($directions as $key => $val) {
+                    $name = explode('/', $val);
+                    array_push($all, array(
+                        'name'=> iconv('gbk', 'utf-8', $name[count($name)-1]),
+                        'dir'=>iconv('gbk', 'utf-8', $val)
+                    ));
+                }
+            foreach($files as $key => $val) {
+                    $name = explode('/', $val);
+                    $name = iconv('gbk', 'utf-8', $name[count($name)-1]);
+                    $dir = iconv('gbk', 'utf-8', $val);
+                    $size = Storage::size($val);
+                    array_push($all, array(
+                        'name'=> $name,
+                        'dir'=>$dir,
+                        'url'=>$base.iconv('gbk', 'utf-8', $val),
+                        'ext'=> explode('.', $name)[1],
+                        'size'=>getFileSize($size),
+                        'lasttime'=>Storage::lastModified($val)
+                    ));
+            }
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'目录创建成功！',
+                'data'=> $all
+            ));
        }
    }
    public function getDir (Request $request) {
@@ -41,7 +82,8 @@ class DriverController extends Controller
             $name = explode('/', $val);
             array_push($all, array(
                 'name'=> iconv('gbk', 'utf-8', $name[count($name)-1]),
-                'dir'=>iconv('gbk', 'utf-8', $val)
+                'dir'=>iconv('gbk', 'utf-8', $val),
+                'lasttime'=>Storage::lastModified($val)
             ));
         }
        foreach($files as $key => $val) {
@@ -54,9 +96,8 @@ class DriverController extends Controller
                 'dir'=>$dir,
                 'url'=>$base.iconv('gbk', 'utf-8', $val),
                 'ext'=> explode('.', $name)[1],
-                'size'=>getFileSize($size)
-                // 'size'=>Storage::size($dir),
-                // 'lasttime'=>Storage::lastModified($dir)
+                'size'=>getFileSize($size),
+                'lasttime'=>Storage::lastModified($val)
             ));
        }
        return json_encode(array(
@@ -68,5 +109,62 @@ class DriverController extends Controller
                'content'=>$all
            )
        ));
+   }
+   public function delDir (Request $request) {
+       $dir = $request->dir;
+       if (count(explode('.', $dir))>=2) {
+            $group = explode(',', $dir);
+            $del = array();
+            foreach($group as $val) {
+                array_push($del,iconv('utf-8', 'gbk', $val));
+            }
+            $del = Storage::delete($del);
+            if ($del) {
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'删除成功！',
+                    'data'=> $group
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'删除失败，该路径不存在！'
+                ));
+            }
+       } else {
+            $group = explode(',', $dir);
+            $del = null;
+            foreach($group as $val) {
+                $del = Storage::deleteDirectory(iconv('utf-8', 'gbk', $val));
+            }
+            if ($del) {
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'删除成功！'
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'删除失败，该路径不存在！'
+                ));
+            }
+       }
+   }
+   public function updateDir (Request $request) {
+       $dir = 'pan/'.$request->dir;
+       $value = 'pan/'.$request->value;
+       $out = null;
+       $out = Storage::move(iconv('utf-8','gbk',$dir),$value);
+       if ($out) {
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'重命名成功！'
+            ));
+       } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'重命名失败！'
+            ));
+       }
    }
 }

@@ -48,3 +48,5 @@ Route::match(['get','post'],'/set/score', 'ScoreController@add')->name('setscore
 // 文件柜
 Route::match(['get','post'],'/dir/make', 'DriverController@makeDir')->name('makeDir');
 Route::match(['get','post'],'/dir/get', 'DriverController@getDir')->name('getDir');
+Route::match(['get','post'],'/dir/del', 'DriverController@delDir')->name('delDir');
+Route::match(['get','post'],'/dir/update', 'DriverController@updateDir')->name('updateDir');
