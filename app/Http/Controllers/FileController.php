@@ -27,7 +27,7 @@ class FileController extends Request
                             'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
                             'file'=> $filename,
                             'ext'=> $ext,
-                            'size'=>$size
+                            'size'=>getFileSize($size)
                         );
                         return json_encode(array(
                             'status'=>1,

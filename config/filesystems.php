@@ -66,7 +66,10 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/uploads')
         ],
-
-    ],
+        'public_folder' => [
+            'driver' => 'local',
+            'root' => public_path('pan'),
+        ],
+    ]
 
 ];

@@ -45,3 +45,6 @@ Route::match(['get','post'],'/send/message', 'MessageController@add')->name('add
 // 积分
 Route::match(['get','post'],'/score', 'UserController@score')->name('score');
 Route::match(['get','post'],'/set/score', 'ScoreController@add')->name('setscore');
+// 文件柜
+Route::match(['get','post'],'/dir/make', 'DriverController@makeDir')->name('makeDir');
+Route::match(['get','post'],'/dir/get', 'DriverController@getDir')->name('getDir');
