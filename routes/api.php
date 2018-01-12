@@ -51,3 +51,4 @@ Route::match(['get','post'],'/dir/get', 'DriverController@getDir')->name('getDir
 Route::match(['get','post'],'/dir/del', 'DriverController@delDir')->name('delDir');
 Route::match(['get','post'],'/dir/update', 'DriverController@updateDir')->name('updateDir');
 Route::match(['get','post'],'/dir/upload', 'DriverController@upload')->name('uploadDir');
+Route::match(['get','post'],'/dir/type', 'DriverController@category')->name('Dircategory');

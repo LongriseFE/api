@@ -251,4 +251,21 @@ class DriverController extends Controller
             ));
         }
    }
+   public function category (Request $request) {
+       $files = Storage::allFiles('pan');
+       $all = array();
+       $base = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/';
+       foreach($files as $val) {
+            $name = explode('/', $val);
+            $name = iconv('gbk', 'utf-8', $name[count($name)-1]);
+           array_push($all, array(
+               'name'=>$name,
+               'url'=> $base.iconv('gbk','utf-8', $val),
+               'size'=>getFileSize(storage::size($val)),
+               'ext'=>Storage::mimeType($val),
+               'time'=>Storage::lastModified($val)
+           ));
+       }
+       return json_encode($all);
+   }
 }
