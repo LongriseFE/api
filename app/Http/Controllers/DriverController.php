@@ -154,7 +154,7 @@ class DriverController extends Controller
        $dir = 'pan/'.$request->dir;
        $value = 'pan/'.$request->value;
        $out = null;
-       $out = Storage::move(iconv('utf-8','gbk',$dir),$value);
+       $out = Storage::move(iconv('utf-8','gbk',$dir),iconv('utf-8','gbk',$value));
        if ($out) {
             return json_encode(array(
                 'status'=>1,
