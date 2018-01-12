@@ -197,7 +197,7 @@ class DriverController extends Controller
             if($request->hasFile('file')) {
                 $files = $request->file('file');
                 if ($files->isValid()) {
-                    $originalName = $files->getClientOriginalName();  
+                    $originalName = $files->getClientOriginalName(); 
                     //扩展名  
                     $size = $files->getClientSize();
                     $ext = $files->getClientOriginalExtension(); 
@@ -206,14 +206,17 @@ class DriverController extends Controller
                     //临时绝对路径  
                     $realPath = $files->getRealPath();  
                     $filename = date('YmdHiS').uniqid().'.'.$ext;  
-                    $bool = Storage::disk('pan')->put($filename, file_get_contents($realPath));
+                    $bool = Storage::disk('pan')->put(iconv('utf-8','gbk',$originalName), file_get_contents($realPath));
+                    $path = null;
                     if ($request->dir) {
-                        Storage::move(iconv('utf-8', 'gbk', 'pan/'.$filename), iconv('utf-8', 'gbk', 'pan/'.$request->dir.'/'.$filename));
+                        $path = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan'.$request->dir;
+                        Storage::move(iconv('utf-8', 'gbk', 'pan/'.$originalName), iconv('utf-8', 'gbk', 'pan/'.$request->dir.'/'.$originalName));
                     } else {
+                        $path = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan';
                     }
                     if ($bool) {
                         $data = array(
-                            'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan',
+                            'path'=>$path,
                             'file'=> $filename,
                             'ext'=> $ext,
                             'size'=>getFileSize($size)
