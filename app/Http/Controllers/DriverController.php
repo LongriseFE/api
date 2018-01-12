@@ -154,6 +154,31 @@ class DriverController extends Controller
        $dir = 'pan/'.$request->dir;
        $value = 'pan/'.$request->value;
        $out = null;
+       if (count(explode('/', $dir)) === count(explode('/', $value))) {
+            if (!Storage::exists(iconv('utf-8','gbk',$dir))) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'重命名失败，文件不存在！'
+                ));
+            } else if (Storage::exists(iconv('utf-8','gbk',$value))) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'重命名失败，已存在该文件！'
+                ));
+            }
+       } else {
+            if (!Storage::exists(iconv('utf-8','gbk',$dir))) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'移动失败，文件不存在！'
+                ));
+            } else if (Storage::exists(iconv('utf-8','gbk',$value))) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'移动失败，已存在该文件！'
+                ));
+            }
+       }
        $out = Storage::move(iconv('utf-8','gbk',$dir),iconv('utf-8','gbk',$value));
        if ($out) {
             return json_encode(array(
@@ -166,5 +191,61 @@ class DriverController extends Controller
                 'msg'=>'重命名失败！'
             ));
        }
+   }
+   public function upload (Request $request) {
+        if ($request->isMethod('POST')) {
+            if($request->hasFile('file')) {
+                $files = $request->file('file');
+                if ($files->isValid()) {
+                    $originalName = $files->getClientOriginalName();  
+                    //扩展名  
+                    $size = $files->getClientSize();
+                    $ext = $files->getClientOriginalExtension(); 
+                    //文件类型  
+                    $type = $files->getClientMimeType();
+                    //临时绝对路径  
+                    $realPath = $files->getRealPath();  
+                    $filename = date('YmdHiS').uniqid().'.'.$ext;  
+                    $bool = Storage::disk('pan')->put($filename, file_get_contents($realPath));
+                    if ($request->dir) {
+                        Storage::move(iconv('utf-8', 'gbk', 'pan/'.$filename), iconv('utf-8', 'gbk', 'pan/'.$request->dir.'/'.$filename));
+                    } else {
+                    }
+                    if ($bool) {
+                        $data = array(
+                            'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan',
+                            'file'=> $filename,
+                            'ext'=> $ext,
+                            'size'=>getFileSize($size)
+                        );
+                        return json_encode(array(
+                            'status'=>1,
+                            'msg'=>'上传成功！',
+                            'data'=>$data
+                        ));
+                    } else {
+                        return json_encode(array(
+                            'status'=>0,
+                            'msg'=>'上传失败，请重试！'
+                        ));
+                    }
+                } else {
+                    return json_encode(array(
+                        'status'=>0,
+                        'msg'=>'文件无效！'
+                    ));
+                }
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'data'=>'没有file'
+                ));
+            }
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'上传文件只能是post请求！'
+            ));
+        }
    }
 }
