@@ -266,6 +266,9 @@ class DriverController extends Controller
                'time'=>Storage::lastModified($val)
            ));
        }
-       return json_encode($all);
+       return json_encode(array(
+           'total'=>count($all),
+           'data'=>$all
+       ));
    }
 }

@@ -52,3 +52,7 @@ Route::match(['get','post'],'/dir/del', 'DriverController@delDir')->name('delDir
 Route::match(['get','post'],'/dir/update', 'DriverController@updateDir')->name('updateDir');
 Route::match(['get','post'],'/dir/upload', 'DriverController@upload')->name('uploadDir');
 Route::match(['get','post'],'/dir/type', 'DriverController@category')->name('Dircategory');
+// 项目
+Route::match(['get','post'],'/project/list', 'ProjectController@list')->name('ProjectList');
+Route::match(['get','post'],'/project/add', 'ProjectController@add')->name('ProjectAdd');
+Route::match(['get','post'],'/project/edit', 'ProjectController@edit')->name('ProjectEdit');
