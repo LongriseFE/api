@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Gregwar\Captcha\CaptchaBuilder;
 use App\Http\Model\User;
+use Illuminate\Support\Facades\Cache;
 use Mail;
 
 class ToolController extends Controller
@@ -13,19 +14,20 @@ class ToolController extends Controller
    public function captcha (Request $request) {
         $builder = new CaptchaBuilder;
         //可以设置图片宽高及字体
-        $builder->build($width = 120, $height = 50, $font = null);
+        $builder->build($width = 120, $height = 40, $font = null);
         //获取验证码的内容
         $phrase = $builder->getPhrase();
 
         //把内容存入session
-        $request->session()->put('captcha', $phrase);
+        // $request->session()->put('captcha', $phrase);
+        Cache::put('captcha', $phrase, 10);
         //生成图片
         header("Cache-Control: no-cache, must-revalidate");
         header('Content-Type: image/jpeg');
         $builder->output();
     }
     public function getcaptcha (Request $request) {
-        $result = $request->session()->get('captcha');
+        $result = Cache::get('captcha');
         if ($result) {
             return json_encode(array(
                 'status'=>1,

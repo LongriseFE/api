@@ -83,7 +83,8 @@ class DriverController extends Controller
             array_push($all, array(
                 'name'=> iconv('gbk', 'utf-8', $name[count($name)-1]),
                 'dir'=>iconv('gbk', 'utf-8', $val),
-                'lasttime'=>Storage::lastModified($val)
+                'lasttime'=>Storage::lastModified($val),
+                'icon'=>$base.'ext/folder.png'
             ));
         }
        foreach($files as $key => $val) {
@@ -95,9 +96,10 @@ class DriverController extends Controller
                 'name'=> $name,
                 'dir'=>$dir,
                 'url'=>$base.iconv('gbk', 'utf-8', $val),
-                'ext'=> explode('.', $name)[1],
+                'ext'=> Storage::mimeType($val),
                 'size'=>getFileSize($size),
-                'lasttime'=>Storage::lastModified($val)
+                'lasttime'=>Storage::lastModified($val),
+                'icon'=>$base.'ext/'.explode('/',Storage::mimeType($val))[1].'.png'
             ));
        }
        return json_encode(array(

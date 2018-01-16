@@ -8,6 +8,7 @@ use App\Http\Model\Message;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Mail;
 
 class UserController extends Controller
@@ -187,7 +188,7 @@ class UserController extends Controller
             ));
         } else if (count(array_diff($params, $recieve)) === 2) {
             $variable = null;
-            if ($request->captcha !== $request->session()->get('captcha')) {
+            if ($request->captcha !== Cache::get('captcha')) {
                 return json_encode(array(
                     'status'=> 0,
                     'msg'=> '验证码错误！'
@@ -241,6 +242,11 @@ class UserController extends Controller
                     'msg'=> '登录成功！',
                     'data'=> $variable,
                     'online'=> $request->session()->get('site')
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=> 0,
+                    'msg'=> '登录失败，密码错误！'
                 ));
             }
         } else {
@@ -401,7 +407,7 @@ class UserController extends Controller
                 'status'=> 0,
                 'msg'=> '参数有误！'
             ));
-        } else if ($request->captcha !== $request->session()->get('captcha')) {
+        } else if ($request->captcha !== Cache::get('captcha')) {
             return json_encode(array(
                 'status'=> 0,
                 'msg'=> '验证码输入有误！'
@@ -614,6 +620,7 @@ class UserController extends Controller
     }
     public function updateFace (Request $request) {
         $uId = $request->uId;
+        $msg = new Message();
         $variable = User::where('uId', $uId)->first();
         if ($request->isMethod('POST')) {
             if($request->hasFile('file')) {
@@ -645,6 +652,12 @@ class UserController extends Controller
                          );
                          $variable->cover = $filename;
                          $variable->update();
+                         $msg->uId = md5(uniqid());
+                        $msg->title='更换头像!';
+                        $msg->content='恭喜您成功更换头像！';
+                        $msg->read = 0;
+                        $msg->to = $request->uId;
+                        $msg->save();
                          return json_encode(array(
                              'status'=>1,
                              'msg'=>'头像修改成功！',
