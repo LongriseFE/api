@@ -161,4 +161,54 @@ class ProjectController extends Controller
             }
         }
     }
+    public function del (Request $request) {
+        $uId = $request->uId;
+        $id = $request->id;
+        if (!$uId) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'请提供有效的用户id！'
+            ));
+        } else if (!User::where('uId', $uId)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'不存在该用户！'
+            ));
+        } else if (!User::where('uId', $uId)->where('status', '>', 1)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'该用户没有权限进行此操作！'
+            ));
+        } else {
+            if (!Project::where('uId', $id)->first()){
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'不存在该项目！'
+                ));
+            } else {
+                $project = Project::where('uId', $id);
+                $project->delete();
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'项目删除成功！'
+                ));
+            }
+        }
+    }
+    public function groups (Request $request) {
+        $groupby = $request->groupby;
+        if (!$groupby) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'没有分组依据！'
+            ));
+        } else {
+            $projects = Project::orderBy('updated_at',$request->order)->get()->groupBy($groupby);
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'没有分组依据！',
+                'data'=>$projects
+            ));
+        }
+    }
 }

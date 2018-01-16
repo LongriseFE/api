@@ -625,12 +625,12 @@ class UserController extends Controller
                      $ext = $files->getClientOriginalExtension(); 
                      //文件类型  
                      $type = $files->getClientMimeType();
-                     if ($type !== 'image/jpeg' || $type !== 'image/png') {
-                         return json_encode(array(
-                             'status'=>0,
-                             'msg'=> '只能上传图片(jpg,png)!'
-                         ));
-                     }
+                    //  if ($type !== 'image/jpeg' || $type !== 'image/png') {
+                    //      return json_encode(array(
+                    //          'status'=>0,
+                    //          'msg'=> '只能上传图片(jpg,png)!'
+                    //      ));
+                    //  }
                      //临时绝对路径  
                      $realPath = $files->getRealPath();  
                      $filename = date('YmdHiS').uniqid().'.'.$ext;  

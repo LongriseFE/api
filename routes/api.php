@@ -56,3 +56,5 @@ Route::match(['get','post'],'/dir/type', 'DriverController@category')->name('Dir
 Route::match(['get','post'],'/project/list', 'ProjectController@list')->name('ProjectList');
 Route::match(['get','post'],'/project/add', 'ProjectController@add')->name('ProjectAdd');
 Route::match(['get','post'],'/project/edit', 'ProjectController@edit')->name('ProjectEdit');
+Route::match(['get','post'],'/project/del', 'ProjectController@del')->name('ProjectDel');
+Route::match(['get','post'],'/project/group', 'ProjectController@groups')->name('Projectgroup');
