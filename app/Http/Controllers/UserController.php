@@ -924,12 +924,13 @@ class UserController extends Controller
         $param = array();
         $between = $request->between;
         $between = json_decode($between);
-        return strtotime($between->start);
-        $user = User::where(function($query) use($limit){
+        $user = User::where(function($query) use($limit, $between){
             if (count($limit)) {
                 foreach($limit as $key => $val) {
                     $query->where($key, $val);
                 }
+            }
+            if (count($between)) {
                 $query->whereBetween('created_at', [$between->start, $between->end]);
             }
         })->orderBy('updated_at', $request->sort)->paginate($request->pagesize);
