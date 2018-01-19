@@ -30,7 +30,8 @@ class Project extends Migration
             $table->integer('view')->nullable()->default(0)->comment('浏览');
             $table->integer('download')->nullable()->default(0)->comment('下载');
             $table->rememberToken();
-            $table->timestamps();
+            $table->integer('created_at');
+            $table->integer('updated_at');
         });
     }
 

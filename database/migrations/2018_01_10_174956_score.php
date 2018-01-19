@@ -22,7 +22,8 @@ class Score extends Migration
             $table->integer('total')->nullable();
             $table->integer('balance')->nullable();
             $table->rememberToken();
-            $table->timestamps();
+            $table->integer('created_at');
+            $table->integer('updated_at');
         });
     }
 

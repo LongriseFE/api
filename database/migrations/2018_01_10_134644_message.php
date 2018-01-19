@@ -22,7 +22,8 @@ class Message extends Migration
             $table->string('to')->nullable();
             $table->integer('read')->nullable();
             $table->rememberToken();
-            $table->timestamps();
+            $table->integer('created_at');
+            $table->integer('updated_at');
         });
     }
 

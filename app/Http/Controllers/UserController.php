@@ -27,7 +27,8 @@ class UserController extends Controller
                 "username",
                 "email",
                 "password",
-                "captcha"
+                "captcha",
+                "code"
             );
             $mode = 'email';
         } else if (!$request->email && $request->phone) {
@@ -60,7 +61,12 @@ class UserController extends Controller
             }
             if ($preg) {
                 // 邮箱或者手机格式验证通过
-                if (strlen($request->password) > 16 || strlen($request->password) < 6) {
+                if (strlen($request->username) > 16 || strlen($request->username) < 6) {
+                    return json_encode(array(
+                        'status'=> 0,
+                        'msg'=> '用户名长度必须是6-16位！'
+                    ));
+                } else if (strlen($request->password) > 16 || strlen($request->password) < 6) {
                     return json_encode(array(
                         'status'=> 0,
                         'msg'=> '密码长度必须是6-16位！'
@@ -90,10 +96,20 @@ class UserController extends Controller
                         //注册成功，发送验证邮件
                         switch ($mode) {
                             case 'email':
-                                if ($request->captcha !== $request->session()->get('captcha')) {
+                                if ($request->captcha !== Cache::get('captcha')) {
                                     return json_encode(array(
                                         'status'=> 0,
-                                        'msg'=> '验证码输入有误！'
+                                        'msg'=> '请填写图片验证码！'
+                                    ));
+                                } else if (intval($request->code) !== intval(Cache::get('code'))) {
+                                    return json_encode(array(
+                                        'status'=> 0,
+                                        'msg'=> '请正确填写您收到的6位数字验证码！'
+                                    ));
+                                } else if ($request->$mode !== Cache::get('email')) {
+                                    return json_encode(array(
+                                        'status'=> 0,
+                                        'msg'=> '注册邮箱与接收验证码的邮箱不一致！'
                                     ));
                                 } else {
                                     $email = $request->$mode;
@@ -114,7 +130,7 @@ class UserController extends Controller
                                     $msg->save();
                                     return json_encode(array(
                                         'status'=> 1,
-                                        'msg'=> '注册成功！',
+                                        'msg'=> '注册成功，已自动为您登录！',
                                         'data'=> $variable,
                                         'mail'=> $flag
                                     ));
@@ -126,27 +142,29 @@ class UserController extends Controller
                                         'status'=> 0,
                                         'msg'=> '验证码格式有误！'
                                     ));
+                                } else if (intval($request->code) !== intval(Cache::get('sms'))) {
+                                    return json_encode(array(
+                                        'status'=> 0,
+                                        'msg'=> '请正确填写您收到的6位数字验证码！'
+                                    ));
+                                } else if ($request->$mode !== Cache::get('phone')) {
+                                    return json_encode(array(
+                                        'status'=> 0,
+                                        'msg'=> '注册手机与接收验证码的手机不一致！'
+                                    ));
                                 } else {
-                                    $original = $request->session()->get('sms');
-                                    if ($original === intval($request->code)) {
-                                        $variable->save();
-                                        $msg->uId = md5(uniqid());
-                                        $msg->title='欢迎注册本站会员!';
-                                        $msg->content='恭喜您成功通过手机'.$request->phone.'注册本站会员!';
-                                        $msg->read = 0;
-                                        $msg->to = $un;
-                                        $msg->save();
-                                        return json_encode(array(
-                                            'status'=> 1,
-                                            'msg'=> '注册成功！',
-                                            'data'=> $variable
-                                        ));
-                                    } else {
-                                        return json_encode(array(
-                                            'status'=> 0,
-                                            'msg'=> '验证码输入有误，请重试！'
-                                        ));
-                                    }
+                                    $variable->save();
+                                    $msg->uId = md5(uniqid());
+                                    $msg->title='欢迎注册本站会员!';
+                                    $msg->content='恭喜您成功通过手机'.$request->phone.'注册本站会员!';
+                                    $msg->read = 0;
+                                    $msg->to = $un;
+                                    $msg->save();
+                                    return json_encode(array(
+                                        'status'=> 1,
+                                        'msg'=> '注册成功！',
+                                        'data'=> $variable
+                                    ));
                                 }
                                 break;
                         }
@@ -341,8 +359,44 @@ class UserController extends Controller
     public function sendCode (Request $request) {
         $uId = $request->uId;
         $type = intval($request->type);
+        $captcha = $request->captcha;
         $variable = User::where('uId', $uId)->first();
-        if ($type) {
+        $email = $request->email;
+        if ($type === 0) {
+            $email = $request->email;
+            if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $email)) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'邮箱格式错误!'
+                ));
+            } else if ($captcha !== Cache::get('captcha')) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'验证码错误!'
+                ));
+            } else if (User::where('email', $email)->first()) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'该邮箱已被注册，请更换或者直接登录!'
+                ));
+            } else {
+                $length = 6;
+                $random = rand(pow(10,($length-1)), pow(10,$length)-1);
+                $to = $email;
+                $flag = Mail::send('remembermail', [
+                    'name'=>$request->username,
+                    'qrcode'=> $random
+                ],function ($message) use($to) {
+                    $message->to($to)->subject('收好你的密钥（视觉码农）');
+                });
+                Cache::put('code', $random, 10);
+                Cache::put('email', $email, 10);
+                return json_encode(array(
+                    'status'=> 1,
+                    'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
+                ));
+            }
+        } else if ($type === 1) {
             // 修改邮箱
             $email = $request->email;
             if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $email)) {
@@ -354,6 +408,11 @@ class UserController extends Controller
                 return json_encode(array(
                     'status'=>0,
                     'msg'=>'该邮箱已被绑定,请更换新邮箱!'
+                ));
+            } else if ($captcha !== Cache::get('captcha')) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'验证码错误!'
                 ));
             } else {
                 $length = 6;
@@ -372,7 +431,7 @@ class UserController extends Controller
                     'msg'=> '验证码已经发送至您的邮箱，请注意查收！'
                 ));
             }
-        } else {
+        } else if ($typep === 2) {
             // 修改密码
             if (!$variable->email){
                 return json_encode(array(
@@ -519,6 +578,51 @@ class UserController extends Controller
             ));
         }
     }
+    public function bindingPhone (Request $request) {
+        $variable = User::where('uId', $request->uId)->first();
+        $msg = new Message();
+        $phone = $request->phone;
+        $code = $request->code;
+        if ($variable->phone){
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'您已经绑定手机!'
+            ));
+        }else if (!$phone) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'请填写新手机号!'
+            ));
+        } else if (count(User::where('phone', $phone)->first())) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'该手机号已被绑定!'
+            ));
+        } else if (intval($code) !== Cache::get('sms')) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'验证码错误!'
+            ));
+        } else if (!preg_match("/^1[34578]{1}\d{9}$/", $phone)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'手机号格式错误!'
+            ));
+        } else {
+            $variable->phone = $phone;
+            $variable->update();
+            $msg->uId = md5(uniqid());
+            $msg->title='绑定手机号码!';
+            $msg->content='恭喜您成功更换绑定手机,新手机号码是:'.$request->new;
+            $msg->read = 0;
+            $msg->to = $request->uId;
+            $msg->save();
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'成功绑定手机号!'
+            ));
+        }
+    }
     public function updatePhone (Request $request) {
         $variable = User::where('uId', $request->uId)->first();
         $msg = new Message();
@@ -540,7 +644,7 @@ class UserController extends Controller
                 'status'=>0,
                 'msg'=>'请填写新手机号!'
             ));
-        } else if (intval($code) !== $request->session()->get('sms')) {
+        } else if (intval($code) !== Cache::get('sms')) {
             return json_encode(array(
                 'status'=>0,
                 'msg'=>'验证码错误!'
@@ -562,6 +666,53 @@ class UserController extends Controller
             return json_encode(array(
                 'status'=>1,
                 'msg'=>'修改成功!'
+            ));
+        }
+    }
+    public function bindingEmail (Request $request) {
+        $variable = User::where('uId', $request->uId)->first();
+        $msg = new Message();
+        $email = $request->email;
+        $code = $request->code;
+        $captcha = $request->captcha;
+        if ($variable->email){
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'您已经绑定邮箱!'.$variable->email
+            ));
+        } else if (!$email) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'请填写要绑定的邮箱!'
+            ));
+        } else if (intval($code) !== intval($variable->remember_token)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'验证码错误!'
+            ));
+        } else if ($captcha !== Cache::get('captcha')) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'图片验证码错误!'
+            ));
+        } else if (!preg_match('/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/', $email)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'邮箱格式错误!'
+            ));
+        } else {
+            $variable->email = $email;
+            $variable->remember_token = '';
+            $variable->update();
+            $msg->uId = md5(uniqid());
+            $msg->title='绑定邮箱!';
+            $msg->content='恭喜您成功更换绑定邮箱,新邮箱是:'.$request->email;
+            $msg->read = 0;
+            $msg->to = $request->uId;
+            $msg->save();
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'绑定成功!'
             ));
         }
     }
@@ -592,7 +743,7 @@ class UserController extends Controller
                 'status'=>0,
                 'msg'=>'验证码错误!'
             ));
-        } else if ($captcha !== $request->session()->get('captcha')) {
+        } else if ($captcha !== Cache::get('captcha')) {
             return json_encode(array(
                 'status'=>0,
                 'msg'=>'图片验证码错误!'
@@ -688,6 +839,49 @@ class UserController extends Controller
             ));
         }
     }
+    public function base64 (Request $request) {
+        $uId = $request->uId;
+        $data = $request->data;
+        $user = User::where('uId', $uId)->first();
+        if (!$uId) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'用户id必填！'
+            ));
+        } else if (!$data) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'base64不能为空！'
+            ));
+        } else if (!count($user)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'不存在该用户！'
+            ));
+        } else {
+            $files = explode(',', $data);
+            $output_file = date('YmdHiS').uniqid().'.jpg';
+            $boolean = Storage::disk('uploads')->put($output_file, base64_decode($files[1]));
+            if ($boolean) {
+                $user->cover = $output_file;
+                $user->update();
+                $data = array(
+                    'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
+                    'file'=>$output_file
+                );
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'头像修改成功！',
+                    'data'=> $data
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'上传失败，请重试！'
+                ));
+            }
+        }
+    }
     // 积分
     public function score (Request $request) {
         $uId = $request -> uId;
@@ -707,5 +901,42 @@ class UserController extends Controller
                 'msg'=>'不存在该用户!'
             ));
         }
+    }
+    public function userInfo (Request $request) {
+        $uId = $request->uId;
+        $users = User::where('uId', $uId)->first();
+        if (count($users)) {
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'获取成功！',
+                'data'=>$users
+            ));
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'不存在的用户！'
+            ));
+        }
+    }
+    public function list (Request $request) {
+        $limit = $request->limit;
+        $limit = json_decode($limit);
+        $param = array();
+        $between = $request->between;
+        $between = json_decode($between);
+        return strtotime($between->start);
+        $user = User::where(function($query) use($limit){
+            if (count($limit)) {
+                foreach($limit as $key => $val) {
+                    $query->where($key, $val);
+                }
+                $query->whereBetween('created_at', [$between->start, $between->end]);
+            }
+        })->orderBy('updated_at', $request->sort)->paginate($request->pagesize);
+        return json_encode(array(
+            'status'=>1,
+            'msg'=>'获取成功！',
+            'data'=>$user
+        ));
     }
 }

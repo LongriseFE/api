@@ -19,6 +19,7 @@ Route::match(['get', 'post'], '/base64', 'FileController@base64')->name('base64'
 Route::match(['get', 'post'], '/delete', 'FileController@delete')->name('delete');
 Route::match(['get', 'post'], '/download', 'FileController@downfile')->name('downfile');
 Route::match(['get','post'],'/update/face', 'UserController@updateFace')->name('updateFace');
+Route::match(['get','post'],'/update/face/base64', 'UserController@base64')->name('updateFacebase64');
 //验证码
 Route::group(['middleware'=>['web']], function () {
     Route::match(['get', 'post'],'/captcha', 'ToolController@captcha')->name('captcha');
@@ -34,7 +35,11 @@ Route::group(['middleware'=>['web']], function () {
     Route::match(['get', 'post'],'/update/userinfo', 'UserController@updateUserInfo')->name('updateUserInfo');
     Route::match(['get', 'post'],'/update/password', 'UserController@updatePassword')->name('updatePassword');
     Route::match(['get','post'],'/update/phone', 'UserController@updatePhone')->name('updatePhone');
+    Route::match(['get','post'],'/binding/phone', 'UserController@bindingPhone')->name('bindingPhone');
     Route::match(['get','post'],'/update/email', 'UserController@updateEmail')->name('updateEmail');
+    Route::match(['get','post'],'/binding/email', 'UserController@bindingEmail')->name('bindingEmail');
+    Route::match(['get','post'],'/user/info', 'UserController@userInfo')->name('userInfo');
+    Route::match(['get','post'],'/user/list', 'UserController@list')->name('userlist');
 });
 
 // 消息模块

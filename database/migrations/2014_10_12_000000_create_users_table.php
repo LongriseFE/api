@@ -36,7 +36,8 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->string('theme')->nullable();
             $table->rememberToken();
-            $table->timestamps();
+            $table->integer('created_at');
+            $table->integer('updated_at');
         });
     }
 

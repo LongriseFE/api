@@ -15,25 +15,34 @@ class MessageController extends Controller
         $recieve = $request->recieve;
         $read = $request->read;
         $variable = null;
-
-        if (!$recieve || intval($recieve) === -1) {
+        if (!$uId) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'请填写用户id!'
+            ));
+        } else if (!count(User::where('uId', $uId)->first())) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'不存在改用户！'
+            ));
+        }else if (!$recieve || intval($recieve) === -1) {
             // 查询接收和发送的
             if (!$read || intval($read) === -1) {
-                $variable = Message::where('from', $uId)->orwhere('to', $uId)->paginate($request->pagesize);
+                $variable = Message::where('from', $uId)->orwhere('to', $uId)->orderBy('updated_at', 'desc')->paginate($request->pagesize);
             } else {
-                $variable = Message::where('from', $uId)->orwhere('to', $uId)->where('read', $read)->paginate($request->pagesize);
+                $variable = Message::where('from', $uId)->orwhere('to', $uId)->where('read', $read)->orderBy('updated_at', 'desc')->paginate($request->pagesize);
             }
         } else if (intval($recieve) === 0) {
             if (!$read || intval($read) === -1) {
-                $variable = Message::where('to', $uId)->paginate($request->pagesize);
+                $variable = Message::where('to', $uId)->paginate($request->pagesize)->orderBy('updated_at', 'desc');
             } else {
-                $variable = Message::where('to', $uId)->where('read', $read)->paginate($request->pagesize);
+                $variable = Message::where('to', $uId)->where('read', $read)->orderBy('updated_at', 'desc')->paginate($request->pagesize);
             }
         } else if (intval($recieve) === 1) {
             if (!$read || intval($read) === -1) {
-                $variable = Message::where('from', $uId)->paginate($request->pagesize);
+                $variable = Message::where('from', $uId)->orderBy('updated_at', 'desc')->paginate($request->pagesize);
             } else {
-                $variable = Message::where('from', $uId)->where('read', $read)->paginate($request->pagesize);
+                $variable = Message::where('from', $uId)->where('read', $read)->orderBy('updated_at', 'desc')->paginate($request->pagesize);
             }
         } else {
             return json_encode(array(

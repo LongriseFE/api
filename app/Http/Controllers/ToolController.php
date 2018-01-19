@@ -20,7 +20,7 @@ class ToolController extends Controller
 
         //把内容存入session
         // $request->session()->put('captcha', $phrase);
-        Cache::put('captcha', $phrase, 10);
+        Cache::put('captcha', $phrase, 30);
         //生成图片
         header("Cache-Control: no-cache, must-revalidate");
         header('Content-Type: image/jpeg');
@@ -63,7 +63,7 @@ class ToolController extends Controller
     // http://localhost/api/public/sms?type=0&captcha=8j8m1&phone=18827078587
     public function sms (Request $request) {
         $type = $request->type;
-        $captcha = $request->session()->get('captcha');
+        $captcha = Cache::get('captcha');
         if (!$request->captcha) {
             return json_encode(array(
                 'status'=> 0,
@@ -82,7 +82,7 @@ class ToolController extends Controller
         } else {
             $length = 6;
             $code = rand(pow(10,($length-1)), pow(10,$length)-1); //随机生成的6为数字验证码
-            $request->session()->put('sms', $code);
+            Cache::put('sms', $code, 10);
             $params = array(
                 'mobile' => $request->phone,
                 'content' => '【视觉码农】：您本次的验证码为：'.$code.'，请勿泄露该验证码！',
@@ -102,6 +102,7 @@ class ToolController extends Controller
                         ));
                     } else {
                         // 如果没有注册就发送验证码
+                        Cache::put('phone', $request->phone, 10);
                         $result = wx_http_request($url, $params );
                     }
                     break;
@@ -135,7 +136,7 @@ class ToolController extends Controller
                 return json_encode(array(
                     'status'=>0,
                     'msg'=>'验证码发送失败，请重试！',
-                    'code'=>$request->session()->get('sms')
+                    'code'=>Cache::get('sms')
                 ));
             }
             switch (json_decode($result)->code) {
@@ -143,7 +144,7 @@ class ToolController extends Controller
                     return json_encode(array(
                         'status'=>1,
                         'msg'=>'验证码发送成功！',
-                        'code'=>$request->session()->get('sms')
+                        'code'=>Cache::get('sms')
                     ));
                     break;
                 case '10001':
@@ -179,9 +180,9 @@ class ToolController extends Controller
                     break;
                 case '10010':
                     return json_encode(array(
-                        'status'=>0,
+                        'status'=>1,
                         'msg'=>'接口需要付费，请充值',
-                        'code'=>$request->session()->get('sms')
+                        'code'=>Cache::get('sms')
                     ));
                     break;
                 case '10020':
