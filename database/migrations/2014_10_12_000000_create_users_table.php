@@ -25,7 +25,7 @@ class CreateUsersTable extends Migration
             $table->string('hometown')->nullable();
             $table->string('living')->nullable();
             $table->integer('online')->nullable();
-            $table->integer('sex')->nullable();
+            $table->integer('sex')->default(2);
             $table->integer('status')->nullable();
             $table->integer('t_score')->nullable()->default(0)->comment('总积分');
             $table->integer('b_score')->nullable()->default(0)->comment('剩余积分');

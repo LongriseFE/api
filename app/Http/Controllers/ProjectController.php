@@ -14,11 +14,16 @@ class ProjectController extends Controller
         $limit = $request->limit;
         $limit = json_decode($limit);
         $param = array();
-        $project = Project::where(function($query) use($limit){
+        $between = $request->between;
+        $between = json_decode($between);
+        $project = Project::where(function($query) use($limit, $between){
             if (count($limit)) {
                 foreach($limit as $key => $val) {
                     $query->where($key, $val);
                 }
+            }
+            if (count($between)) {
+                $query->whereBetween('created_at', [$between->start, $between->end]);
             }
         })->orderBy('updated_at', $request->sort)->paginate($request->pagesize);
         return json_encode(array(
