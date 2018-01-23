@@ -63,3 +63,13 @@ Route::match(['get','post'],'/project/add', 'ProjectController@add')->name('Proj
 Route::match(['get','post'],'/project/edit', 'ProjectController@edit')->name('ProjectEdit');
 Route::match(['get','post'],'/project/del', 'ProjectController@del')->name('ProjectDel');
 Route::match(['get','post'],'/project/group', 'ProjectController@groups')->name('Projectgroup');
+
+// 后台管理
+Route::match(['get','post'],'/admin/user/add', 'UserController@adminAdd')->name('useradminAdd');
+Route::match(['get','post'],'/admin/user/edit', 'UserController@adminEdit')->name('useradminEdit');
+
+// 抽奖 
+Route::match(['get','post'],'/luck/list', 'LuckController@list')->name('lucklist');
+Route::match(['get','post'],'/prize', 'LuckController@prize')->name('prize');
+Route::match(['get','post'],'/prize/add', 'LuckController@add')->name('addprize');
+Route::match(['get','post'],'/luck/reset', 'LuckController@reset')->name('reset');

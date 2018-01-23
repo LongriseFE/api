@@ -927,10 +927,10 @@ class UserController extends Controller
         $user = User::where(function($query) use($limit, $between){
             if (count($limit)) {
                 foreach($limit as $key => $val) {
-                    $query->where($key, $val);
+                    $query->where($key, 'like', '%'.$val.'%');
                 }
             }
-            if (count($between)) {
+            if (isset($between)) {
                 $query->whereBetween('created_at', [$between->start, $between->end]);
             }
         })->orderBy('updated_at', $request->sort)->paginate($request->pagesize);
@@ -939,5 +939,129 @@ class UserController extends Controller
             'msg'=>'获取成功！',
             'data'=>$user
         ));
+    }
+    public function adminAdd (Request $request) {
+        $user = new User();
+        if (!User::where('uId', $request->uId)->where('status', '>', 4)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'抱歉，不存在该用户，或者该用户没有权限操作！'
+            ));
+        } else if (!preg_match('/^\w+$/', $request->username)) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'抱歉，用户名只能由字母数字和下划线组成！'
+            ));
+        } else if (User::where('username', $request->username)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'抱歉，该用户名已被占用！'
+            ));
+        } else if (User::where('email', $request->email)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'抱歉，该邮箱已被占用！'
+            ));
+        } else if ($request->captcha !== Cache::get('captcha') || !$request->captcha) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'抱歉，验证码输入有误！'
+            ));
+        } else if ($request->email && !$request->phone) {
+            $length = 6;
+            $random = rand(pow(10,($length-1)), pow(10,$length)-1);
+            $user->uId = md5(uniqid());
+            $user->recId = $request->uId;
+            $user->email = $request->email;
+            $user->username = $request->username;
+            $user->password = md5($random);
+            $result = $user->save();
+            if ($result) {
+                $qrcode = '用户名：'. $request->username.'  邮箱：'.$request->email.'  密码：'.$random;
+                $to = $request->email;
+                $flag = Mail::send('registermail', [
+                    'name'=>$request->username,
+                    'qrcode'=> $qrcode
+                ],function ($message) use($to) {
+                    $message->to($to)->subject('恭喜您成功注册（视觉码农）会员！');
+                });
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'用户添加成功！'
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'用户添加失败，请重试！'
+                ));
+            }
+        } else if (!$request->email && $request->phone) {
+            return 0;
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'参数错误！'
+            ));
+        } 
+    }
+    public function adminEdit (Request $request) {
+        if (!$request->uId || !User::where('uId', $request->uId)->where('status', '>', 4)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'您的id不存在，或者您还没有权限进行此操作！'
+            ));
+        } else if (!$request->oId || !User::where('uId', $request->oId)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'操作的用户不存在！'
+            ));
+        } 
+        // else if ($request->captcha !== Cache::get('captcha')) {
+        //     return json_encode(array(
+        //         'status'=>0,
+        //         'msg'=>'验证码错误！'
+        //     ));
+        // } 
+        else {
+            $userInfo = json_decode($request->userInfo);
+            $user = User::where('uId', $request->oId)->first();
+            foreach($userInfo as $key => $val) {
+                if ($key === 'username') {
+                    if (count(User::where('username', $val)->get()) > 1) {
+                        return json_encode(array(
+                            'status'=>0,
+                            'msg'=>'该用户名已存在！'
+                        ));
+                    } else {
+                        $user->$key = $val;
+                    }
+                } else if ($key === 'phone') {
+                    if (!$val && count(User::where('phone', $val)->get()) > 1) {
+                        return json_encode(array(
+                            'status'=>0,
+                            'msg'=>'该手机已存在！'
+                        ));
+                    } else {
+                        $user->$key = $val;
+                    }
+                } else if ($key === 'email') {
+                    if (count(User::where('email', $val)->get()) > 1) {
+                        return json_encode(array(
+                            'status'=>0,
+                            'msg'=>'该邮箱已存在！'
+                        ));
+                    } else {
+                        $user->$key = $val;
+                    }
+                } else {
+                    $user->$key = $val;
+                }
+            }
+            $user->update();
+            return json_encode(array(
+                'status'=>1,
+                'msg'=>'修改成功！'
+            ));
+        }
     }
 }
