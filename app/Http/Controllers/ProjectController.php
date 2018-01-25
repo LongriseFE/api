@@ -19,10 +19,10 @@ class ProjectController extends Controller
         $project = Project::where(function($query) use($limit, $between){
             if (count($limit)) {
                 foreach($limit as $key => $val) {
-                    $query->where($key, $val);
+                    $query->where($key, 'like', '%'.$val.'%');
                 }
             }
-            if (count($between)) {
+            if (isset($between)) {
                 $query->whereBetween('created_at', [$between->start, $between->end]);
             }
         })->orderBy('updated_at', $request->sort)->paginate($request->pagesize);

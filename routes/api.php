@@ -70,6 +70,11 @@ Route::match(['get','post'],'/admin/user/edit', 'UserController@adminEdit')->nam
 
 // 抽奖 
 Route::match(['get','post'],'/luck/list', 'LuckController@list')->name('lucklist');
+Route::match(['get','post'],'/luck/getuser', 'LuckController@getUser')->name('getUser');
 Route::match(['get','post'],'/prize', 'LuckController@prize')->name('prize');
 Route::match(['get','post'],'/prize/add', 'LuckController@add')->name('addprize');
 Route::match(['get','post'],'/luck/reset', 'LuckController@reset')->name('reset');
+
+// 设置
+Route::match(['get','post'],'/setting/department/add', 'DepartmentController@add')->name('addDepartment');
+Route::match(['get','post'],'/setting/department/list', 'DepartmentController@list');

@@ -504,6 +504,12 @@ class UserController extends Controller
         $group = explode(',', $uId);
         $deleted = array();
         $notexist = array();
+        if (!User::where('uId', $request->author)->where('status', '>', 4)->first()) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'没有权限进行此操作！'
+            ));
+        }
         forEach($group as $key => $value){
             $variable = User::where('uId', $value)->first();
             if ($variable) {
@@ -957,17 +963,18 @@ class UserController extends Controller
                 'status'=>0,
                 'msg'=>'抱歉，该用户名已被占用！'
             ));
-        } else if (User::where('email', $request->email)->first()) {
-            return json_encode(array(
-                'status'=>0,
-                'msg'=>'抱歉，该邮箱已被占用！'
-            ));
-        } else if ($request->captcha !== Cache::get('captcha') || !$request->captcha) {
+        }else if ($request->captcha !== Cache::get('captcha') || !$request->captcha) {
             return json_encode(array(
                 'status'=>0,
                 'msg'=>'抱歉，验证码输入有误！'
             ));
         } else if ($request->email && !$request->phone) {
+            if (User::where('email', $request->email)->first()) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'抱歉，该邮箱已被占用！'
+                ));
+            }
             $length = 6;
             $random = rand(pow(10,($length-1)), pow(10,$length)-1);
             $user->uId = md5(uniqid());
@@ -996,7 +1003,30 @@ class UserController extends Controller
                 ));
             }
         } else if (!$request->email && $request->phone) {
-            return 0;
+            if (User::where('phone', $request->phone)->first()) {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'抱歉，该手机已被占用！'
+                ));
+            }
+            $password = substr($request->phone, (strlen($request->phone) - 6 ));
+            $user->uId = md5(uniqid());
+            $user->recId = $request->uId;
+            $user->phone = $request->phone;
+            $user->username = $request->username;
+            $user->password = md5($password);
+            $result = $user->save();
+            if ($result) {
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'用户添加成功！'
+                ));
+            } else {
+                return json_encode(array(
+                    'status'=>0,
+                    'msg'=>'用户添加失败，请重试！'
+                ));
+            }
         } else {
             return json_encode(array(
                 'status'=>0,
@@ -1016,12 +1046,12 @@ class UserController extends Controller
                 'msg'=>'操作的用户不存在！'
             ));
         } 
-        // else if ($request->captcha !== Cache::get('captcha')) {
-        //     return json_encode(array(
-        //         'status'=>0,
-        //         'msg'=>'验证码错误！'
-        //     ));
-        // } 
+        else if ($request->captcha !== Cache::get('captcha')) {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'验证码错误！'
+            ));
+        } 
         else {
             $userInfo = json_decode($request->userInfo);
             $user = User::where('uId', $request->oId)->first();
@@ -1036,7 +1066,7 @@ class UserController extends Controller
                         $user->$key = $val;
                     }
                 } else if ($key === 'phone') {
-                    if (!$val && count(User::where('phone', $val)->get()) > 1) {
+                    if ($val && count(User::where('phone', $val)->get()) > 1) {
                         return json_encode(array(
                             'status'=>0,
                             'msg'=>'该手机已存在！'
