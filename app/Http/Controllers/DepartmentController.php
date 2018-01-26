@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Model\Department;
+use App\Http\Model\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Mail;
@@ -34,5 +35,20 @@ class DepartmentController extends Controller
         return json_encode(array(
             'data'=> $departments
         ));
+    }
+    public function del (Request $request) {
+      if (!User::where('uId', $request->uId)->where('status', '>', 4)->first()){
+        return json_encode(array(
+          'status'=>0,
+          'msg'=>'没有权限进行此项操作！'
+        ));
+      } else {
+        $depart = Department::where('uId', $request->id)->first();
+        $depart->delete();
+        return json_encode(array(
+          'status'=>1,
+          'msg'=>'删除成功！'
+        ));
+      }
     }
 }

@@ -78,3 +78,11 @@ Route::match(['get','post'],'/luck/reset', 'LuckController@reset')->name('reset'
 // 设置
 Route::match(['get','post'],'/setting/department/add', 'DepartmentController@add')->name('addDepartment');
 Route::match(['get','post'],'/setting/department/list', 'DepartmentController@list');
+Route::match(['get','post'],'/setting/department/del', 'DepartmentController@del');
+// 主题
+Route::match(['get','post'],'/setting/theme/add', 'ThemeController@add');
+Route::match(['get','post'],'/setting/theme/list', 'ThemeController@list');
+// 项目分类
+Route::match(['get','post'],'/project/category/add', 'ProjectCategoryController@add');
+Route::match(['get','post'],'/project/category/list', 'ProjectCategoryController@list');
+Route::match(['get','post'],'/project/category/del', 'ProjectCategoryController@del');

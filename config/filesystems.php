@@ -70,6 +70,10 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/pan'),
         ],
+        'themes' => [
+          'driver' => 'local',
+          'root' => storage_path('app/themes'),
+      ],
     ]
 
 ];

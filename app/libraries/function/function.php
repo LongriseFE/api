@@ -51,4 +51,16 @@ function getFileSize ($num) {
     $num /= pow(1024, $p);
     return number_format($num, 3).' '.$format;
 }
+function f_order($arr,$field,$sort){
+  $order = array();
+  foreach($arr as $kay => $value){
+      $order[] = $value[$field];
+  }
+  if($sort==='desc'){
+      array_multisort($order,SORT_ASC,$arr);
+  }else if ($sort === 'asc'){
+      array_multisort($order,SORT_DESC,$arr);
+  }
+  return $arr;
+}
 ?>
