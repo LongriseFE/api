@@ -25,7 +25,8 @@ class FileController extends Request
                     if ($bool) {
                         $data = array(
                             'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
-                            'file'=> $filename,
+                            'name'=> $filename,
+                            'url'=> 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads/'.$filename,
                             'ext'=> $ext,
                             'size'=>getFileSize($size)
                         );
@@ -60,15 +61,17 @@ class FileController extends Request
        }
    }
    public function base64 (Request $request) {
-       $files = $request->base64;
-       if ($files) {
-            $files = explode(',', $files);
-            $output_file = date('YmdHiS').uniqid().'.jpg';
-            $boolean = Storage::disk('uploads')->put($output_file, base64_decode($files[1]));
+       $files = explode(' ', $request->base64);
+       foreach($files as $key => $base) {
+         if ($base) {
+           $file = explode(',', $base);
+           $output_file = date('YmdHiS').uniqid().'.jpg';
+            $boolean = Storage::disk('uploads')->put($output_file, base64_decode($file[1]));
             if ($boolean) {
                 $data = array(
                     'path'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads',
-                    'file'=>$output_file
+                    'name'=>$output_file,
+                    'url'=>'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/uploads/'.$output_file
                 );
                 return json_encode(array(
                     'status'=>1,
@@ -81,11 +84,7 @@ class FileController extends Request
                     'msg'=>'上传失败，请重试！'
                 ));
             }
-       } else {
-           return json_encode(array(
-               'status'=>0,
-               'msg'=>'参数错误！'
-           ));
+         }
        }
    }
    // 删除文件

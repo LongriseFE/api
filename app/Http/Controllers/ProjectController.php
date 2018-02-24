@@ -7,6 +7,7 @@ use App\Http\Model\Project;
 use App\Http\Model\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -66,7 +67,13 @@ class ProjectController extends Controller
                 $fit = true;
                 $projects = new Project();
                 foreach($info as $key => $val) {
-                    $projects->$key = $val;
+                    if ($key === 'content') {
+                      $output_file = date('YmdHiS').uniqid().'.html';
+                      $boolean = Storage::disk('projects')->put($output_file, iconv('utf-8', 'gbk', $val));
+                      $projects->$key = $output_file;
+                    } else {
+                      $projects->$key = $val;
+                    }
                     if (Schema::hasColumn('projects', $key)) {
                         if ($key === 'uId') {
                             array_push($keys, 0);
@@ -215,5 +222,17 @@ class ProjectController extends Controller
                 'data'=>$projects
             ));
         }
+    }
+    public function info (Request $request) {
+      $uId = $request->uId;
+      $result = Project::where('uId', $uId)->first();
+      $result->html = mb_convert_encoding(Storage::disk('projects')->get($result->content), 'utf-8', 'gbk');
+      if ($result) {
+        return json_encode(array(
+          'status'=>1,
+          'msg'=>'获取成功！',
+          'data'=>$result
+        ));
+      }
     }
 }

@@ -66,6 +66,10 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/uploads')
         ],
+        'projects' => [
+          'driver' => 'local',
+          'root' => storage_path('app/projects')
+        ],
         'pan' => [
             'driver' => 'local',
             'root' => storage_path('app/pan'),

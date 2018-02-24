@@ -1075,14 +1075,14 @@ class UserController extends Controller
                         $user->$key = $val;
                     }
                 } else if ($key === 'email') {
-                    if (count(User::where('email', $val)->get()) > 1) {
-                        return json_encode(array(
-                            'status'=>0,
-                            'msg'=>'该邮箱已存在！'
-                        ));
-                    } else {
-                        $user->$key = $val;
-                    }
+                  if ($val && count(User::where('email', $val)->get()) > 1) {
+                    return json_encode(array(
+                        'status'=>0,
+                        'msg'=>'该邮箱已存在！'
+                    ));
+                  } else {
+                    $user->$key = $val;
+                  }
                 } else {
                     $user->$key = $val;
                 }
