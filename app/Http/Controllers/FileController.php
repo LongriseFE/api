@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Model\Project;
 use Illuminate\Support\Facades\Storage;
 
 class FileController extends Request
@@ -111,7 +112,10 @@ class FileController extends Request
         $ext = explode('.', $file)[1];
         $name = $request->name;
         if (file_exists(realpath(base_path('storage/app/uploads')).'/'.$file)) {
-            return response()->download(realpath(base_path('storage/app/uploads')).'/'.$file, $name.'.'.$ext);
+          $project = Project::where('uId', $request->uId)->first();
+          $project->download = $project->download + 1;
+          $project->update();
+          return response()->download(realpath(base_path('storage/app/uploads')).'/'.$file, $name.'.'.$ext);
         } else {
             return json_encode(array(
                 'status'=>0,

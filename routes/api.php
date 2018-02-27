@@ -87,3 +87,6 @@ Route::match(['get','post'],'/setting/theme/list', 'ThemeController@list');
 Route::match(['get','post'],'/project/category/add', 'ProjectCategoryController@add');
 Route::match(['get','post'],'/project/category/list', 'ProjectCategoryController@list');
 Route::match(['get','post'],'/project/category/del', 'ProjectCategoryController@del');
+
+Route::match(['get','post'],'/comments/add', 'CommentController@add');
+Route::match(['get','post'],'/comments/list', 'CommentController@list');

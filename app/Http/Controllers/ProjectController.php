@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Model\Project;
+use App\Http\Model\Categoryproject;
 use App\Http\Model\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -227,6 +228,14 @@ class ProjectController extends Controller
       $uId = $request->uId;
       $result = Project::where('uId', $uId)->first();
       $result->html = mb_convert_encoding(Storage::disk('projects')->get($result->content), 'utf-8', 'gbk');
+      $branch = Categoryproject::where('value', $result->branch)->first();
+      $category = Categoryproject::where('value', $result->category)->first();
+      $author = User::where('uId', $result->author)->first();
+      $related = Project::orderBy('view', 'desc')->limit(5)->where('author', $result->author)->get();
+      $result->author = $author;
+      $result->related = $related;
+      $result->branch = $branch;
+      $result->category = $category;
       if ($result) {
         return json_encode(array(
           'status'=>1,
