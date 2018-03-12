@@ -28,6 +28,11 @@ class ProjectController extends Controller
                 $query->whereBetween('created_at', [$between->start, $between->end]);
             }
         })->orderBy('updated_at', $request->sort)->paginate($request->pagesize);
+        foreach($project as $index => $item) {
+            $project[$index]['author'] = User::where('uId', $item->author)->first();
+            $project[$index]['branch'] = Categoryproject::where('value', $item->branch)->first();
+            $project[$index]['category'] = Categoryproject::where('value', $item->category)->first();
+        }
         return json_encode(array(
             'status'=>1,
             'msg'=>'获取成功！',

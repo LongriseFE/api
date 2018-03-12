@@ -25,9 +25,11 @@ class ProjectCategoryController extends Controller
     ));
   }
   public function list (Request $request) {
-    $category = Categoryproject::with('children')->first();
+    $category = Categoryproject::with('children')->whereNull('parent')->get();
     return json_encode(array(
-        'data'=> $category
+      'status'=>1,
+      'msg'=>'获取成功',
+      'data'=> $category
     ));
   }
   public function del (Request $request) {

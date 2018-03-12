@@ -90,3 +90,7 @@ Route::match(['get','post'],'/project/category/del', 'ProjectCategoryController@
 
 Route::match(['get','post'],'/comments/add', 'CommentController@add');
 Route::match(['get','post'],'/comments/list', 'CommentController@list');
+
+// 点赞
+Route::match(['get','post'],'/thumbs/add', 'ThumbsController@add');
+Route::match(['get','post'],'/thumbs/list', 'ThumbsController@list');
