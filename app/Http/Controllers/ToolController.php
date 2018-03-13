@@ -10,6 +10,23 @@ use Mail;
 
 class ToolController extends Controller
 {
+    public function createcard (Request $request) {
+       $string = $request->string;
+       $length = mb_strlen($string, 'utf-8');
+       $array = [];
+       for ($i = 0; $i < $length; $i ++) {
+            $array[] = mb_substr($string, $i, 1, 'utf-8');  
+       }
+       $img = imagecreatetruecolor(2016, 3413);
+       $red = imagecolorallocate($img, 218, 35, 27);
+       imagefilledrectangle($img, 0, 0, 2016, 3413, $red);
+        $black = imagecolorallocate($img, 255, 245, 0);
+        $font_file = 'F:\projects\api\app\Http\Controllers\fonts\FZCCHJW.TTF';
+        imagefttext($img, 1100, 0, 300, 2200, $black, $font_file, '城');
+        header('Content-Type: image/png');
+        imagepng($img);
+        imagedestroy($img);
+    }
    // 图片验证码
    public function captcha (Request $request) {
         $builder = new CaptchaBuilder;

@@ -34,7 +34,7 @@ class DriverController extends Controller
                         'msg'=>'该目录已存在，请更换！'
                     ));
                 }
-                Storage::makeDirectory('pan/'.$parent.'/'.$dir);
+                Storage::makeDirectory('pan/'.iconv('utf-8', 'gbk', $parent).'/'.$dir);
                 $directions = Storage::directories('pan'.$parent);
                 $files = Storage::files('pan'.$parent);
             }
@@ -76,7 +76,7 @@ class DriverController extends Controller
        $base = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/';
        $dir = $request->dir;
        $files = Storage::files(iconv('utf-8', 'gbk', 'pan/'.$dir));
-       $directions = Storage::directories('pan/'.$dir);
+       $directions = Storage::directories(iconv('utf-8', 'gbk', 'pan/'.$dir));
        $all = array();
        foreach($directions as $key => $val) {
             $name = explode('/', $val);
@@ -273,4 +273,20 @@ class DriverController extends Controller
            'data'=>$all
        ));
    }
+   public function downfile (Request $request) {
+        $file = $request->url;
+        $ext = explode('.', $file)[1];
+        $name = $request->name;
+        if (file_exists(realpath(base_path('storage/app/pan')).'\\'.$file)) {
+        $project = Project::where('uId', $request->uId)->first();
+        $project->download = $project->download + 1;
+        $project->update();
+        return response()->download(realpath(base_path('storage/app/pan')).'\\'.$file, $name.'.'.$ext);
+        } else {
+            return json_encode(array(
+                'status'=>0,
+                'msg'=>'文件不存在!'
+            ));
+        }
+    }
 }

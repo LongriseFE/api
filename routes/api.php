@@ -57,6 +57,7 @@ Route::match(['get','post'],'/dir/del', 'DriverController@delDir')->name('delDir
 Route::match(['get','post'],'/dir/update', 'DriverController@updateDir')->name('updateDir');
 Route::match(['get','post'],'/dir/upload', 'DriverController@upload')->name('uploadDir');
 Route::match(['get','post'],'/dir/type', 'DriverController@category')->name('Dircategory');
+Route::match(['get','post'],'/dir/download', 'DriverController@downfile');
 // 项目
 Route::match(['get','post'],'/project/list', 'ProjectController@list')->name('ProjectList');
 Route::match(['get','post'],'/project/info', 'ProjectController@info')->name('ProjectInfo');
@@ -94,3 +95,6 @@ Route::match(['get','post'],'/comments/list', 'CommentController@list');
 // 点赞
 Route::match(['get','post'],'/thumbs/add', 'ThumbsController@add');
 Route::match(['get','post'],'/thumbs/list', 'ThumbsController@list');
+
+// 工具
+Route::match(['get','post'],'/createcard', 'ToolController@createcard');

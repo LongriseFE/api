@@ -179,7 +179,8 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         // Mews\Captcha\CaptchaServiceProvider::class,
-        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class
+        SimpleSoftwareIO\QrCode\QrCodeServiceProvider::class,
+        Intervention\Image\ImageServiceProvider::class
 
     ],
 
@@ -231,7 +232,8 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         // 'Captcha' => Mews\Captcha\Facades\Captcha::class,
         'Pinyin' => Overtrue\LaravelPinyin\Facades\Pinyin::class,
-        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class
+        'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
+        'Image' => Intervention\Image\Facades\Image::class
     ],
 
 ];

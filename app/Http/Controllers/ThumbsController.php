@@ -16,7 +16,7 @@ class ThumbsController extends Controller
         if ($exist) {
             $exist->delete();
             return json_encode(array(
-                'status'=>1,
+                'status'=>2,
                 'msg'=>'已取消点赞！'
             ));
         } else {
