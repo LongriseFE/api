@@ -9,7 +9,8 @@ class DriverController extends Controller
 {
    public function makeDir (Request $request) {
        $parent = $request->parent;
-       $dir = iconv('utf-8','gbk',$request->dir);
+       $dir = 'pan/'.$request->dir;
+       $newpath = null;
        if (!$dir) {
            return json_encode(array(
                'status'=>0,
@@ -18,90 +19,75 @@ class DriverController extends Controller
        } else {
             if (!$parent) {
                 // 在根目录创建
-                if (Storage::exists('pan/'.$dir)) {
+                if (Storage::exists(array_iconv($dir, 'gbk'))) {
                     return json_encode(array(
                         'status'=>0,
                         'msg'=>'该目录已存在，请更换！'
                     ));
                 }
-                Storage::makeDirectory('pan/'.$dir);
-                $directions = Storage::directories('pan');
-                $files = Storage::files('pan');
+                $newpath = Storage::makeDirectory(array_iconv($dir, 'gbk'));
             } else {
-                if (storage::exists('pan/'.$parent.'/'.$dir)) {
+                $dir = $request->dir;
+                if (storage::exists(array_iconv('pan/'.$parent.'/'.$dir, 'gbk'))) {
                     return json_encode(array(
                         'status'=>0,
                         'msg'=>'该目录已存在，请更换！'
                     ));
                 }
-                Storage::makeDirectory('pan/'.iconv('utf-8', 'gbk', $parent).'/'.$dir);
-                $directions = Storage::directories('pan'.$parent);
-                $files = Storage::files('pan'.$parent);
+                $newpath = Storage::makeDirectory(array_iconv('pan/'.$parent.'/'.$dir, 'gbk'));
             }
-            $base = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/';
-            $dir = $request->parent;
-            $files = Storage::files(iconv('utf-8', 'gbk', 'pan/'.$dir));
-            $directions = Storage::directories('pan/'.$dir);
-            $all = array();
-            foreach($directions as $key => $val) {
-                    $name = explode('/', $val);
-                    array_push($all, array(
-                        'name'=> iconv('gbk', 'utf-8', $name[count($name)-1]),
-                        'dir'=>iconv('gbk', 'utf-8', $val)
-                    ));
-                }
-            foreach($files as $key => $val) {
-                    $name = explode('/', $val);
-                    $name = iconv('gbk', 'utf-8', $name[count($name)-1]);
-                    $dir = iconv('gbk', 'utf-8', $val);
-                    $size = Storage::size($val);
-                    array_push($all, array(
-                        'name'=> $name,
-                        'dir'=>$dir,
-                        'url'=>$base.iconv('gbk', 'utf-8', $val),
-                        'ext'=> explode('.', $name)[1],
-                        'size'=>getFileSize($size),
-                        'lasttime'=>Storage::lastModified($val)
-                    ));
+            if ($newpath) {
+                return json_encode(array(
+                    'status'=>1,
+                    'msg'=>'目录创建成功！'
+                ));
             }
-            return json_encode(array(
-                'status'=>1,
-                'msg'=>'目录创建成功！',
-                'data'=> $all
-            ));
        }
    }
    public function getDir (Request $request) {
-    //    return Storage::size(iconv('utf-8', 'gbk', 'pan/document/测试文件夹/icon5.png'));
        $base = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/';
-       $dir = $request->dir;
-       $files = Storage::files(iconv('utf-8', 'gbk', 'pan/'.$dir));
-       $directions = Storage::directories(iconv('utf-8', 'gbk', 'pan/'.$dir));
+        $dir = 'pan/'.$request->dir;
+        if (Storage::exists($dir)) {
+            $directions = Storage::directories($dir);
+            $files = Storage::files($dir);
+        } else {
+            $directions = Storage::directories(array_iconv($dir, 'gbk'));
+            $files = Storage::files(array_iconv($dir, 'gbk'));
+        }
+       foreach ($directions as $key => $val) {
+           $directions[$key] = array_iconv($val, 'UTF-8');
+       }
+       foreach ($files as $key => $val) {
+            $files[$key] = array_iconv($val, 'UTF-8');
+        }
        $all = array();
-       foreach($directions as $key => $val) {
+       foreach ($directions as $key => $val) {
+           $name = explode('/', $val);
+           $name = $name[count($name) - 1];
+           array_push($all, array(
+               'name'=>$name,
+               'dir'=>$val,
+               'time'=>Storage::lastModified(array_iconv($val, 'gbk')),
+               'icon'=>$base.'ext/folder.png'
+           ));
+       }
+       foreach ($files as $key => $val) {
             $name = explode('/', $val);
+            $name = $name[count($name) - 1];
+            $ext = explode('.', $val);
+            $ext = $ext[count($ext) - 1];
+            if (Storage::exists($val)) {
+                $file = $val;
+            } else {
+                $file = array_iconv($val, 'gbk');
+            }
             array_push($all, array(
-                'name'=> iconv('gbk', 'utf-8', $name[count($name)-1]),
-                'dir'=>iconv('gbk', 'utf-8', $val),
-                'lasttime'=>Storage::lastModified($val),
-                'icon'=>$base.'ext/folder.png'
+                'name'=>$name,
+                'dir'=>$val,
+                'time'=>Storage::lastModified(array_iconv($val, 'gbk')),
+                'icon'=>$base.'ext/'.$ext.'.png'
             ));
         }
-       foreach($files as $key => $val) {
-            $name = explode('/', $val);
-            $name = iconv('gbk', 'utf-8', $name[count($name)-1]);
-            $dir = iconv('gbk', 'utf-8', $val);
-            $size = Storage::size($val);
-            array_push($all, array(
-                'name'=> $name,
-                'dir'=>$dir,
-                'url'=>$base.iconv('gbk', 'utf-8', $val),
-                'ext'=> Storage::mimeType($val),
-                'size'=>getFileSize($size),
-                'lasttime'=>Storage::lastModified($val),
-                'icon'=>$base.'ext/'.explode('/',Storage::mimeType($val))[1].'.png'
-            ));
-       }
        return json_encode(array(
            'status'=>1,
            'msg'=>'成功获取该目录所有文件！',
@@ -195,64 +181,64 @@ class DriverController extends Controller
        }
    }
    public function upload (Request $request) {
-        if ($request->isMethod('POST')) {
-            if($request->hasFile('file')) {
-                $files = $request->file('file');
-                if ($files->isValid()) {
-                    $originalName = $files->getClientOriginalName(); 
-                    //扩展名  
-                    $size = $files->getClientSize();
-                    $ext = $files->getClientOriginalExtension(); 
-                    //文件类型  
-                    $type = $files->getClientMimeType();
-                    //临时绝对路径  
-                    $realPath = $files->getRealPath();  
-                    $filename = date('YmdHiS').uniqid().'.'.$ext;  
-                    $bool = Storage::disk('pan')->put(iconv('utf-8','gbk',$originalName), file_get_contents($realPath));
-                    $path = null;
-                    if ($request->dir) {
-                        $path = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan'.$request->dir;
-                        Storage::move(iconv('utf-8', 'gbk', 'pan/'.$originalName), iconv('utf-8', 'gbk', 'pan/'.$request->dir.'/'.$originalName));
-                    } else {
-                        $path = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan';
-                    }
-                    if ($bool) {
-                        $data = array(
-                            'path'=>$path,
-                            'file'=> $filename,
-                            'ext'=> $ext,
-                            'size'=>getFileSize($size)
-                        );
-                        return json_encode(array(
-                            'status'=>1,
-                            'msg'=>'上传成功！',
-                            'data'=>$data
-                        ));
-                    } else {
-                        return json_encode(array(
-                            'status'=>0,
-                            'msg'=>'上传失败，请重试！'
-                        ));
-                    }
+    if ($request->isMethod('POST')) {
+        if($request->hasFile('file')) {
+            $files = $request->file('file');
+            if ($files->isValid()) {
+                $originalName = $files->getClientOriginalName(); 
+                //扩展名  
+                $size = $files->getClientSize();
+                $ext = $files->getClientOriginalExtension(); 
+                //文件类型  
+                $type = $files->getClientMimeType();
+                //临时绝对路径  
+                $realPath = $files->getRealPath();  
+                $filename = date('YmdHiS').uniqid().'.'.$ext;  
+                $bool = Storage::disk('pan')->put(iconv('utf-8','gbk',$originalName), file_get_contents($realPath));
+                $path = null;
+                if ($request->dir) {
+                    $path = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan'.$request->dir;
+                    Storage::move(iconv('utf-8', 'gbk', 'pan/'.$originalName), iconv('utf-8', 'gbk', 'pan/'.$request->dir.'/'.$originalName));
+                } else {
+                    $path = 'http://'.$request->server('SERVER_ADDR').'/api/'.'storage/app/pan';
+                }
+                if ($bool) {
+                    $data = array(
+                        'path'=>$path,
+                        'file'=> $filename,
+                        'ext'=> $ext,
+                        'size'=>getFileSize($size)
+                    );
+                    return json_encode(array(
+                        'status'=>1,
+                        'msg'=>'上传成功！',
+                        'data'=>$data
+                    ));
                 } else {
                     return json_encode(array(
                         'status'=>0,
-                        'msg'=>'文件无效！'
+                        'msg'=>'上传失败，请重试！'
                     ));
                 }
             } else {
                 return json_encode(array(
                     'status'=>0,
-                    'data'=>'没有file'
+                    'msg'=>'文件无效！'
                 ));
             }
         } else {
             return json_encode(array(
                 'status'=>0,
-                'msg'=>'上传文件只能是post请求！'
+                'data'=>'没有file'
             ));
         }
-   }
+    } else {
+        return json_encode(array(
+            'status'=>0,
+            'msg'=>'上传文件只能是post请求！'
+        ));
+    }
+}
    public function category (Request $request) {
        $files = Storage::allFiles('pan');
        $all = array();
@@ -278,10 +264,7 @@ class DriverController extends Controller
         $ext = explode('.', $file)[1];
         $name = $request->name;
         if (file_exists(realpath(base_path('storage/app/pan')).'\\'.$file)) {
-        $project = Project::where('uId', $request->uId)->first();
-        $project->download = $project->download + 1;
-        $project->update();
-        return response()->download(realpath(base_path('storage/app/pan')).'\\'.$file, $name.'.'.$ext);
+            return response()->download(realpath(base_path('storage/app/pan')).'\\'.$file, $name.'.'.$ext);
         } else {
             return json_encode(array(
                 'status'=>0,

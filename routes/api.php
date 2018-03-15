@@ -95,6 +95,9 @@ Route::match(['get','post'],'/comments/list', 'CommentController@list');
 // 点赞
 Route::match(['get','post'],'/thumbs/add', 'ThumbsController@add');
 Route::match(['get','post'],'/thumbs/list', 'ThumbsController@list');
+// 收藏
+Route::match(['get','post'],'/collection/add', 'CollectionController@add');
+Route::match(['get','post'],'/collection/list', 'CollectionController@list');
 
 // 工具
 Route::match(['get','post'],'/createcard', 'ToolController@createcard');

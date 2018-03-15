@@ -7,6 +7,7 @@ use App\Http\Model\Project;
 use App\Http\Model\Categoryproject;
 use App\Http\Model\User;
 use App\Http\Model\Thumbs;
+use App\Http\Model\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -237,6 +238,10 @@ class ProjectController extends Controller
       $result->praiselist = Thumbs::where('target', $uId)->join('users', 'users.uId', '=', 'thumbs.user')->select('users.name', 'users.cover', 'users.sex')->paginate(10);
     //   获取当前访问者是否已经点赞该项目
         $result->praise = count(Thumbs::where('target', $uId)->where('user', $request->vistor)->get());
+        //   获取点赞人的列表
+      $result->collectionlist = Collection::where('target', $uId)->join('users', 'users.uId', '=', 'collections.user')->select('users.name', 'users.cover', 'users.sex')->paginate(10);
+      //   获取当前访问者是否已经点赞该项目
+          $result->collection = count(Collection::where('target', $uId)->where('user', $request->vistor)->get());
       $result->html = mb_convert_encoding(Storage::disk('projects')->get($result->content), 'utf-8', 'gbk');
       $branch = Categoryproject::where('value', $result->branch)->first();
       $category = Categoryproject::where('value', $result->category)->first();
